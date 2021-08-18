@@ -167,7 +167,8 @@ public class GitlabServerPullRequestDecorator implements PullRequestBuildStatusD
                 }
             }
 
-            List<PostAnalysisIssueVisitor.ComponentIssue> openIssues = analysis.getPostAnalysisIssueVisitor().getIssues().stream().filter(i -> OPEN_ISSUE_STATUSES.contains(i.getIssue().getStatus())).collect(Collectors.toList());
+            // List<PostAnalysisIssueVisitor.ComponentIssue> openIssues = analysis.getPostAnalysisIssueVisitor().getIssues().stream().filter(i -> OPEN_ISSUE_STATUSES.contains(i.getIssue().getStatus())).collect(Collectors.toList());
+            List<PostAnalysisIssueVisitor.ComponentIssue> openIssues = Collections.emptyList();
 
             String summaryCommentBody = analysis.createAnalysisSummary(new MarkdownFormatterFactory());
             List<NameValuePair> summaryContentParams = Collections

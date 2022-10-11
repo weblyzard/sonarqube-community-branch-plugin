@@ -27,6 +27,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.sonar.api.issue.Issue;
+import org.sonar.api.platform.Server;
+import org.sonar.api.rules.RuleType;
 import org.sonar.ce.task.projectanalysis.scm.Changeset;
 import org.sonar.ce.task.projectanalysis.scm.ScmInfoRepository;
 import org.sonar.db.alm.setting.AlmSettingDto;
@@ -38,8 +41,11 @@ import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -52,6 +58,9 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
 
     private static final String VIEW_IN_SONARQUBE_LABEL = "View in SonarQube";
     private static final Pattern NOTE_MARKDOWN_VIEW_LINK_PATTERN = Pattern.compile("^\\[" + VIEW_IN_SONARQUBE_LABEL + "]\\((.*?)\\)$");
+
+    private static final Set<RuleType> RULE_TYPES_TO_COMMENT = new HashSet<>(
+            Arrays.asList(RuleType.BUG, RuleType.VULNERABILITY, RuleType.SECURITY_HOTSPOT));
 
     private final ScmInfoRepository scmInfoRepository;
     private final ReportGenerator reportGenerator;
@@ -70,6 +79,10 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
         P pullRequest = getPullRequest(client, almSettingDto, projectAlmSettingDto, analysis);
         U user = getCurrentUser(client);
         List<PostAnalysisIssueVisitor.ComponentIssue> openSonarqubeIssues = analysis.getScmReportableIssues();
+
+        // filter by type, only directly comment on certain types
+        openSonarqubeIssues = openSonarqubeIssues.stream()
+                .filter(i -> RULE_TYPES_TO_COMMENT.contains(i.getIssue().type())).collect(Collectors.toList());
 
         List<Triple<D, N, Optional<ProjectIssueIdentifier>>> currentProjectSonarqubeComments = findOpenSonarqubeComments(client,
                 pullRequest,

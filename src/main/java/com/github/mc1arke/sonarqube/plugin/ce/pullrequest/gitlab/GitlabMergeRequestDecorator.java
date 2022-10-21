@@ -216,7 +216,7 @@ public class GitlabMergeRequestDecorator extends DiscussionAwarePullRequestDecor
         return !note.isSystem();
     }
 
-    @Override
+	@Override
     protected void addNoteToDiscussion(GitlabClient client, Discussion discussion, MergeRequest pullRequest, String note) {
         try {
             client.addMergeRequestDiscussionNote(pullRequest.getTargetProjectId(), pullRequest.getIid(), discussion.getId(), note);
@@ -226,9 +226,27 @@ public class GitlabMergeRequestDecorator extends DiscussionAwarePullRequestDecor
     }
 
     @Override
+    protected void deleteDiscussionNote(GitlabClient client, Discussion discussion, MergeRequest pullRequest, Note note) {
+        try {
+            client.deleteMergeRequestDiscussionNote(pullRequest.getTargetProjectId(), pullRequest.getIid(), discussion.getId(), note.getId());
+        } catch (IOException ex) {
+            throw new IllegalStateException("Could not delete note from Merge Request discussion", ex);
+        }
+    }
+
+    @Override
     protected void resolveDiscussion(GitlabClient client, Discussion discussion, MergeRequest pullRequest) {
         try {
             client.resolveMergeRequestDiscussion(pullRequest.getTargetProjectId(), pullRequest.getIid(), discussion.getId());
+        } catch (IOException ex) {
+            throw new IllegalStateException("Could not resolve Merge Request discussion", ex);
+        }
+    }
+
+    @Override
+    protected void unresolveDiscussion(GitlabClient client, Discussion discussion, MergeRequest pullRequest) {
+        try {
+            client.unresolveMergeRequestDiscussion(pullRequest.getTargetProjectId(), pullRequest.getIid(), discussion.getId());
         } catch (IOException ex) {
             throw new IllegalStateException("Could not resolve Merge Request discussion", ex);
         }

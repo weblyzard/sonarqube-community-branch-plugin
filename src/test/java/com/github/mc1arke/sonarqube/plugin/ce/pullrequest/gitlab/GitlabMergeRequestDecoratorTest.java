@@ -18,6 +18,7 @@
  */
 package com.github.mc1arke.sonarqube.plugin.ce.pullrequest.gitlab;
 
+import com.github.mc1arke.sonarqube.plugin.CommunityBranchPlugin;
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.AnalysisDetails;
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.DecorationResult;
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.PostAnalysisIssueVisitor;
@@ -36,6 +37,7 @@ import org.mockito.ArgumentCaptor;
 import org.sonar.api.ce.posttask.QualityGate;
 import org.sonar.api.issue.Issue;
 import org.sonar.api.platform.Server;
+import org.sonar.api.rules.RuleType;
 import org.sonar.ce.task.projectanalysis.component.Component;
 import org.sonar.ce.task.projectanalysis.scm.Changeset;
 import org.sonar.ce.task.projectanalysis.scm.ScmInfo;
@@ -49,7 +51,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +61,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -190,7 +195,8 @@ public class GitlabMergeRequestDecoratorTest {
         verify(gitlabClient, never()).resolveMergeRequestDiscussion(anyLong(), anyLong(), any());
         verify(gitlabClient).addMergeRequestDiscussion(anyLong(), anyLong(), mergeRequestNoteArgumentCaptor.capture());
 
-        assertThat(mergeRequestNoteArgumentCaptor.getValue()).isNotInstanceOf(CommitNote.class);    }
+        assertThat(mergeRequestNoteArgumentCaptor.getValue()).isNotInstanceOf(CommitNote.class);
+    }
 
     @Test
     public void shouldNotCloseDiscussionWithSingleNonResolvableNoteFromSonarqubeUserButNoIssueIdInBody() throws IOException {
@@ -267,6 +273,44 @@ public class GitlabMergeRequestDecoratorTest {
         verify(gitlabClient).resolveMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID), discussionIdArgumentCaptor.capture());
 
         assertThat(discussionIdArgumentCaptor.getValue()).isEqualTo(discussion.getId());
+    }
+
+    @Test
+    public void shouldDeleteDiscussionWithResolvableNoteFromSonarqubeUserAndOnlySystemNoteFromOtherUser() throws IOException {
+        User otherUser = mock(User.class);
+        when(otherUser.getUsername()).thenReturn("other.user@gitlab.dummy");
+
+        Note note = mock(Note.class);
+        when(note.getId()).thenReturn(1l);
+        when(note.getAuthor()).thenReturn(sonarqubeUser);
+        when(note.getBody()).thenReturn("[View in SonarQube](url)");
+        when(note.isResolvable()).thenReturn(true);
+
+        Note note2 = mock(Note.class);
+        when(note2.getId()).thenReturn(2l);
+        when(note2.getAuthor()).thenReturn(otherUser);
+        when(note2.getBody()).thenReturn("System post on behalf of user");
+        when(note2.isSystem()).thenReturn(true);
+
+        Discussion discussion = mock(Discussion.class);
+        when(discussion.getId()).thenReturn("discussionId2");
+        when(discussion.getNotes()).thenReturn(Arrays.asList(note, note2));
+
+        when(analysisDetails.parseIssueIdFromUrl("url")).thenReturn(Optional.of(new AnalysisDetails.ProjectIssueIdentifier(PROJECT_KEY, "issueId")));
+        when(gitlabClient.getMergeRequestDiscussions(anyLong(), anyLong())).thenReturn(Collections.singletonList(discussion));
+
+        // instruct to delete resolvable comments
+        when(analysisDetails.getScannerProperty(CommunityBranchPlugin.PR_DELETE_RESOLVED_DISCUSSIONS)).thenReturn(Optional.of(String.valueOf(true)));
+
+        underTest.decorateQualityGateStatus(analysisDetails, almSettingDto, projectAlmSettingDto);
+
+        ArgumentCaptor<String> discussionIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Long> noteIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
+        verify(gitlabClient).deleteMergeRequestDiscussionNote(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
+                discussionIdArgumentCaptor.capture(), noteIdArgumentCaptor.capture());
+
+        assertThat(discussionIdArgumentCaptor.getValue()).isEqualTo(discussion.getId());
+        assertThat(noteIdArgumentCaptor.getValue()).isEqualTo(note.getId());
     }
 
     @Test
@@ -538,6 +582,48 @@ public class GitlabMergeRequestDecoratorTest {
     }
 
     @Test
+    public void shouldNotStartNewDiscussionForNewIssueFromCommitInMergeRequestWhenTypeNotAllowed() throws IOException {
+        PostAnalysisIssueVisitor.LightIssue lightIssue = mock(PostAnalysisIssueVisitor.LightIssue.class);
+        when(lightIssue.key()).thenReturn("issueKey1");
+        when(lightIssue.getStatus()).thenReturn(Issue.STATUS_OPEN);
+        when(lightIssue.getLine()).thenReturn(999);
+        when(lightIssue.type()).thenReturn(RuleType.BUG);
+
+        Component component = mock(Component.class);
+
+        PostAnalysisIssueVisitor.ComponentIssue componentIssue = mock(PostAnalysisIssueVisitor.ComponentIssue.class);
+        when(componentIssue.getIssue()).thenReturn(lightIssue);
+        when(componentIssue.getComponent()).thenReturn(component);
+
+        when(postAnalysisIssueVisitor.getIssues()).thenReturn(Collections.singletonList(componentIssue));
+        when(gitlabClient.getMergeRequestDiscussions(anyLong(), anyLong())).thenReturn(new ArrayList<>());
+        when(analysisDetails.createAnalysisIssueSummary(eq(componentIssue), any())).thenReturn("Issue Summary");
+        when(analysisDetails.createAnalysisSummary(any())).thenReturn("Analysis Details");
+        when(analysisDetails.getSCMPathForIssue(componentIssue)).thenReturn(Optional.of("path-to-file"));
+
+        Changeset changeset = mock(Changeset.class);
+        when(changeset.getRevision()).thenReturn("DEF");
+
+        ScmInfo scmInfo = mock(ScmInfo.class);
+        when(scmInfo.hasChangesetForLine(999)).thenReturn(true);
+        when(scmInfo.getChangesetForLine(999)).thenReturn(changeset);
+        when(scmInfoRepository.getScmInfo(component)).thenReturn(Optional.of(scmInfo));
+
+        // instruct to not annotate on BUG
+        when(analysisDetails.getScannerProperty(CommunityBranchPlugin.PR_ALLOWED_RULE_TYPES)).thenReturn(Optional.of("CODE_SMELL"));
+
+        underTest.decorateQualityGateStatus(analysisDetails, almSettingDto, projectAlmSettingDto);
+
+        verify(gitlabClient, never()).resolveMergeRequestDiscussion(anyLong(), anyLong(), any());
+        verify(gitlabClient, never()).addMergeRequestDiscussionNote(anyLong(), anyLong(), any(), any());
+
+        ArgumentCaptor<MergeRequestNote> mergeRequestNoteArgumentCaptor = ArgumentCaptor.forClass(MergeRequestNote.class);
+        verify(gitlabClient, times(1)).addMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID), mergeRequestNoteArgumentCaptor.capture());
+
+        assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(0)).isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details"));
+    }
+
+    @Test
     public void shouldNotStartNewDiscussionForIssueWithExistingCommentFromCommitInMergeRequest() throws IOException {
         PostAnalysisIssueVisitor.LightIssue lightIssue = mock(PostAnalysisIssueVisitor.LightIssue.class);
         when(lightIssue.key()).thenReturn("issueKey1");
@@ -612,6 +698,182 @@ public class GitlabMergeRequestDecoratorTest {
 
         assertThat(mergeRequestNoteArgumentCaptor.getValue()).isNotInstanceOf(CommitNote.class);
     }
+
+	@Test
+	public void shouldResolveOldSummaryAndResolveSummaryCommentOnSuccessAnalysis() throws IOException {
+		when(analysisDetails.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
+		when(analysisDetails.createAnalysisSummary(any())).thenReturn("Analysis Details 4");
+		when(analysisDetails.getCommitSha()).thenReturn("commitsha");
+
+		when(server.getPublicRootUrl()).thenReturn("https://sonarqube.dummy");
+
+		AnalysisDetails analysisDetails0 = mock(AnalysisDetails.class);
+		when(analysisDetails0.createAnalysisSummary(any())).thenReturn("Analysis Details 0");
+		when(analysisDetails0.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
+		AnalysisDetails analysisDetails1 = mock(AnalysisDetails.class);
+		when(analysisDetails1.createAnalysisSummary(any())).thenReturn("Analysis Details 1");
+		when(analysisDetails1.getQualityGateStatus()).thenReturn(QualityGate.Status.WARN);
+		AnalysisDetails analysisDetails2 = mock(AnalysisDetails.class);
+		when(analysisDetails2.createAnalysisSummary(any())).thenReturn("Analysis Details 2");
+		when(analysisDetails2.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
+		AnalysisDetails analysisDetails3 = mock(AnalysisDetails.class);
+		when(analysisDetails3.createAnalysisSummary(any())).thenReturn("Analysis Details 3");
+		when(analysisDetails3.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
+
+		Note note = mock(Note.class);
+		when(note.getAuthor()).thenReturn(sonarqubeUser);
+		when(note.getBody()).thenReturn("[View in SonarQube](url)");
+		when(note.isResolvable()).thenReturn(true);
+		when(note.isResolved()).thenReturn(false);
+		when(analysisDetails.parseIssueIdFromUrl("url"))
+				.thenReturn(Optional.of(new AnalysisDetails.ProjectIssueIdentifier(PROJECT_KEY, "issueId")));
+
+		List<Discussion> discussions = new ArrayList<>();
+		for (int i = 0; i < 5; i++) {
+			Discussion discussion = mock(Discussion.class);
+			when(discussion.getId()).thenReturn("discussion id " + i);
+			when(discussion.getNotes()).thenReturn(Arrays.asList(note));
+			when(gitlabClient.addMergeRequestDiscussion(anyLong(), anyLong(),
+					refEq(new MergeRequestNote("Analysis Details " + i)))).thenReturn(discussion);
+			if (i < 4) {
+				discussions.add(discussion);
+			}
+		}
+		when(gitlabClient.getMergeRequestDiscussions(PROJECT_ID, MERGE_REQUEST_IID)).thenReturn(discussions);
+
+		// create previous analysis summaries
+		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails0);
+		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails1);
+		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails2);
+		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails3);
+		underTest.decorateQualityGateStatus(analysisDetails, almSettingDto, projectAlmSettingDto);
+
+		// 5 merge request discussions are added in total
+		ArgumentCaptor<MergeRequestNote> mergeRequestNoteArgumentCaptor = ArgumentCaptor
+				.forClass(MergeRequestNote.class);
+		verify(gitlabClient, times(5)).addMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
+				mergeRequestNoteArgumentCaptor.capture());
+
+		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(0))
+				.isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 0"));
+		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(1))
+				.isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 1"));
+		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(2))
+				.isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 2"));
+		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(3))
+				.isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 3"));
+		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(4))
+				.isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 4"));
+
+		// called 6 times as an OK quality gate auto-resolves
+		ArgumentCaptor<String> discussionIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
+		verify(gitlabClient, times(6)).resolveMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
+				discussionIdArgumentCaptor.capture());
+
+		// 3 auto-resolves because of OK quality gate
+		assertThat(discussionIdArgumentCaptor.getAllValues().get(0)).isEqualTo("discussion id 3");
+		assertThat(discussionIdArgumentCaptor.getAllValues().get(1)).isEqualTo("discussion id 0");
+		assertThat(discussionIdArgumentCaptor.getAllValues().get(2)).isEqualTo("discussion id 1");
+		assertThat(discussionIdArgumentCaptor.getAllValues().get(3)).isEqualTo("discussion id 2");
+		assertThat(discussionIdArgumentCaptor.getAllValues().get(4)).isEqualTo("discussion id 3");
+		// 4 auto-resolves because of OK quality gate
+		assertThat(discussionIdArgumentCaptor.getAllValues().get(5)).isEqualTo("discussion id 4");
+	}
+
+	@Test
+	public void shouldDeleteOldSummaryAndResolveSummaryCommentOnSuccessAnalysis() throws IOException {
+		Function<Integer, String> createAnalysisSummary = (index) -> {
+			return "Analysis Details " + index
+					+ "\n Issues Bugs Vulnerabilities Code Smells Coverage and Duplications **Project ID:** View in SonarQube";
+		};
+		when(analysisDetails.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
+		when(analysisDetails.createAnalysisSummary(any())).thenReturn(createAnalysisSummary.apply(4));
+		when(analysisDetails.getCommitSha()).thenReturn("commitsha");
+
+		when(server.getPublicRootUrl()).thenReturn("https://sonarqube.dummy");
+
+		// instruct to delete old summary comments
+		when(analysisDetails.getScannerProperty(CommunityBranchPlugin.PR_DELETE_ANALYSIS_SUMMARY))
+				.thenReturn(Optional.of(String.valueOf(true)));
+
+		AnalysisDetails analysisDetails0 = mock(AnalysisDetails.class);
+		when(analysisDetails0.createAnalysisSummary(any())).thenReturn(createAnalysisSummary.apply(0));
+		when(analysisDetails0.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
+		AnalysisDetails analysisDetails1 = mock(AnalysisDetails.class);
+		when(analysisDetails1.createAnalysisSummary(any())).thenReturn(createAnalysisSummary.apply(1));
+		when(analysisDetails1.getQualityGateStatus()).thenReturn(QualityGate.Status.WARN);
+		AnalysisDetails analysisDetails2 = mock(AnalysisDetails.class);
+		when(analysisDetails2.createAnalysisSummary(any())).thenReturn(createAnalysisSummary.apply(2));
+		when(analysisDetails2.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
+		AnalysisDetails analysisDetails3 = mock(AnalysisDetails.class);
+		when(analysisDetails3.createAnalysisSummary(any())).thenReturn(createAnalysisSummary.apply(3));
+		when(analysisDetails3.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
+
+		List<Discussion> discussions = new ArrayList<>();
+		for (int i = 0; i < 5; i++) {
+			Note note = mock(Note.class);
+			when(note.getAuthor()).thenReturn(sonarqubeUser);
+			when(note.getBody()).thenReturn(createAnalysisSummary.apply(i) + "\n[View in SonarQube](url)");
+			when(note.isResolvable()).thenReturn(true);
+			when(note.isResolved()).thenReturn(false);
+			when(analysisDetails.parseIssueIdFromUrl("url"))
+					.thenReturn(Optional.of(new AnalysisDetails.ProjectIssueIdentifier(PROJECT_KEY, "issueId")));
+
+			Discussion discussion = mock(Discussion.class);
+			when(discussion.getId()).thenReturn("discussion id " + i);
+			when(discussion.getNotes()).thenReturn(Arrays.asList(note));
+			when(gitlabClient.addMergeRequestDiscussion(anyLong(),
+					anyLong(),
+					refEq(new MergeRequestNote(createAnalysisSummary.apply(i))))).thenReturn(discussion);
+			if (i < 4) {
+				discussions.add(discussion);
+			}
+		}
+		when(gitlabClient.getMergeRequestDiscussions(PROJECT_ID, MERGE_REQUEST_IID)).thenReturn(discussions);
+
+		// create previous analysis summaries
+		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails0);
+		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails1);
+		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails2);
+		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails3);
+		underTest.decorateQualityGateStatus(analysisDetails, almSettingDto, projectAlmSettingDto);
+
+		// in total, 5 comments are added
+		ArgumentCaptor<MergeRequestNote> mergeRequestNoteArgumentCaptor = ArgumentCaptor
+				.forClass(MergeRequestNote.class);
+		verify(gitlabClient, times(5)).addMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
+				mergeRequestNoteArgumentCaptor.capture());
+
+		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(0))
+				.isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(0)));
+		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(1))
+				.isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(1)));
+		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(2))
+				.isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(2)));
+		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(3))
+				.isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(3)));
+		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(4))
+				.isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(4)));
+
+		// called 2 times as an OK quality gate auto-resolves
+		ArgumentCaptor<String> discussionIdArgumentResolveCaptor = ArgumentCaptor.forClass(String.class);
+		verify(gitlabClient, times(2)).resolveMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
+				discussionIdArgumentResolveCaptor.capture());
+
+		assertThat(discussionIdArgumentResolveCaptor.getAllValues().get(0)).isEqualTo("discussion id 3");
+		assertThat(discussionIdArgumentResolveCaptor.getAllValues().get(1)).isEqualTo("discussion id 4");
+
+		// called 4 times for existing summaries
+		ArgumentCaptor<String> discussionIdArgumentDeleteCaptor = ArgumentCaptor.forClass(String.class);
+		ArgumentCaptor<Long> noteIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
+		verify(gitlabClient, times(4)).deleteMergeRequestDiscussionNote(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
+				discussionIdArgumentDeleteCaptor.capture(), noteIdArgumentCaptor.capture());
+
+		assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(0)).isEqualTo("discussion id 0");
+		assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(1)).isEqualTo("discussion id 1");
+		assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(2)).isEqualTo("discussion id 2");
+		assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(3)).isEqualTo("discussion id 3");
+	}
 
     @Test
     public void shouldSubmitSuccessfulPipelineStatusAndResolvedSummaryCommentOnSuccessAnalysis() throws IOException {

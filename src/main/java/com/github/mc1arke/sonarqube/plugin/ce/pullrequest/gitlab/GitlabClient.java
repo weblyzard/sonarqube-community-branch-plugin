@@ -42,7 +42,11 @@ public interface GitlabClient {
 
     void addMergeRequestDiscussionNote(long projectId, long mergeRequestIid, String discussionId, String noteContent) throws IOException;
 
+    void deleteMergeRequestDiscussionNote(long projectId, long mergeRequestIid, String discussionId, long noteId) throws IOException;
+
     void resolveMergeRequestDiscussion(long projectId, long mergeRequestIid, String discussionId) throws IOException;
+
+    void unresolveMergeRequestDiscussion(long projectId, long mergeRequestIid, String discussionId) throws IOException;
 
     void setMergeRequestPipelineStatus(long projectId, String commitRevision, PipelineStatus status) throws IOException;
 

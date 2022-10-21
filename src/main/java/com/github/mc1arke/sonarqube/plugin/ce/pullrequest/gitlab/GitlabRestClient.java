@@ -30,6 +30,7 @@ import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.gitlab.model.User;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -126,8 +127,26 @@ class GitlabRestClient implements GitlabClient {
     }
 
     @Override
+    public void deleteMergeRequestDiscussionNote(long projectId, long mergeRequestIid, String discussionId, long noteId) throws IOException {
+        String noteIdUrl = String.format("%s/projects/%s/merge_requests/%s/discussions/%s/notes/%s", baseGitlabApiUrl, projectId, mergeRequestIid, discussionId, noteId);
+
+        HttpDelete httpDel = new HttpDelete(noteIdUrl);
+        entity(httpDel, null, httpResponse -> validateResponse(httpResponse, 204, "Discussion note deleted"));
+    }
+
+    @Override
     public void resolveMergeRequestDiscussion(long projectId, long mergeRequestIid, String discussionId) throws IOException {
-        String discussionIdUrl = String.format("%s/projects/%s/merge_requests/%s/discussions/%s?resolved=true", baseGitlabApiUrl, projectId, mergeRequestIid, discussionId);
+        resolveMergeRequestDiscussion(projectId, mergeRequestIid, discussionId, true);
+    }
+
+    @Override
+    public void unresolveMergeRequestDiscussion(long projectId, long mergeRequestIid, String discussionId) throws IOException {
+        resolveMergeRequestDiscussion(projectId, mergeRequestIid, discussionId, false);
+    }
+
+    private void resolveMergeRequestDiscussion(long projectId, long mergeRequestIid, String discussionId, boolean resolve) throws IOException {
+        String discussionIdUrl = String.format("%s/projects/%s/merge_requests/%s/discussions/%s?resolved=%s",
+                baseGitlabApiUrl, projectId, mergeRequestIid, discussionId, String.valueOf(resolve));
 
         HttpPut httpPut = new HttpPut(discussionIdUrl);
         entity(httpPut, null);

@@ -228,6 +228,11 @@ public class AzureDevOpsPullRequestDecorator extends DiscussionAwarePullRequestD
     }
 
     @Override
+    protected void deleteDiscussionNote(AzureDevopsClient client, CommentThread discussion, PullRequest pullRequest, Comment note) {
+
+    }
+
+    @Override
     protected void resolveDiscussion(AzureDevopsClient client, CommentThread discussion, PullRequest pullRequest) {
         try {
             client.resolvePullRequestThread(pullRequest.getRepository().getProject().getName(), pullRequest.getRepository().getName(), pullRequest.getId(), discussion.getId());
@@ -243,6 +248,11 @@ public class AzureDevOpsPullRequestDecorator extends DiscussionAwarePullRequestD
             return issueIdentifier;
         }
         return parseIssueDetails(client, note, "See in SonarQube", NOTE_MARKDOWN_LEGACY_SEE_LINK_PATTERN);
+    }
+
+    @Override
+    protected void unresolveDiscussion(AzureDevopsClient client, CommentThread discussion, PullRequest pullRequest) {
+        // TODO Auto-generated method stub
     }
 
 }

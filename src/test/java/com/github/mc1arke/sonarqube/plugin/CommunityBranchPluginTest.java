@@ -89,7 +89,7 @@ class CommunityBranchPluginTest {
         testCase.load(context);
 
         final ArgumentCaptor<Class<?>> argumentCaptor = ArgumentCaptor.forClass(Class.class);
-        verify(context, times(2)).addExtensions(argumentCaptor.capture(), argumentCaptor.capture());
+        verify(context, times(10)).addExtensions(argumentCaptor.capture(), argumentCaptor.capture());
 
 
         assertThat(argumentCaptor.getAllValues().subList(0, 1)).isEqualTo(List.of(CommunityReportAnalysisComponentProvider.class));
@@ -106,9 +106,9 @@ class CommunityBranchPluginTest {
         testCase.load(context);
 
         final ArgumentCaptor<Object> argumentCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(context, times(2)).addExtensions(argumentCaptor.capture(), argumentCaptor.capture());
+        verify(context, times(10)).addExtensions(argumentCaptor.capture(), argumentCaptor.capture());
 
-        assertThat(argumentCaptor.getAllValues()).hasSize(29);
+        assertThat(argumentCaptor.getAllValues()).hasSize(37);
 
         assertThat(argumentCaptor.getAllValues().subList(0, 2)).isEqualTo(List.of(CommunityBranchFeatureExtension.class, CommunityBranchSupportDelegate.class));
     }

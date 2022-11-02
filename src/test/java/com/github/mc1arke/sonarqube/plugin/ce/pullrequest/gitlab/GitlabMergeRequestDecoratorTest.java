@@ -701,203 +701,203 @@ public class GitlabMergeRequestDecoratorTest {
         assertThat(mergeRequestNoteArgumentCaptor.getValue()).isNotInstanceOf(CommitNote.class);
     }
 
-	@Test
-	public void shouldResolveOldSummaryAndResolveSummaryCommentOnSuccessAnalysis() throws IOException {
-		Function<Integer, String> createAnalysisSummary = (index) -> {
-			return "Analysis Details " + index;
-		};
+    @Test
+    public void shouldResolveOldSummaryAndResolveSummaryCommentOnSuccessAnalysis() throws IOException {
+        Function<Integer, String> createAnalysisSummary = (index) -> {
+            return "Analysis Details " + index;
+        };
 
-		when(analysisDetails.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
-		AnalysisSummary analysisSummary = mock(AnalysisSummary.class);
-		when(analysisSummary.format(any())).thenReturn(createAnalysisSummary.apply(4));
-		when(reportGenerator.createAnalysisSummary(analysisDetails)).thenReturn(analysisSummary);
-		when(analysisDetails.getCommitSha()).thenReturn("commitsha");
+        when(analysisDetails.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
+        AnalysisSummary analysisSummary = mock(AnalysisSummary.class);
+        when(analysisSummary.format(any())).thenReturn(createAnalysisSummary.apply(4));
+        when(reportGenerator.createAnalysisSummary(analysisDetails)).thenReturn(analysisSummary);
+        when(analysisDetails.getCommitSha()).thenReturn("commitsha");
 
-		AnalysisDetails analysisDetails0 = mock(AnalysisDetails.class);
-		AnalysisSummary analysisSummary0 = mock(AnalysisSummary.class);
-		when(analysisSummary0.format(any())).thenReturn(createAnalysisSummary.apply(0));
-		when(reportGenerator.createAnalysisSummary(analysisDetails0)).thenReturn(analysisSummary0);
-		when(analysisDetails0.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
+        AnalysisDetails analysisDetails0 = mock(AnalysisDetails.class);
+        AnalysisSummary analysisSummary0 = mock(AnalysisSummary.class);
+        when(analysisSummary0.format(any())).thenReturn(createAnalysisSummary.apply(0));
+        when(reportGenerator.createAnalysisSummary(analysisDetails0)).thenReturn(analysisSummary0);
+        when(analysisDetails0.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
 
-		AnalysisDetails analysisDetails1 = mock(AnalysisDetails.class);
-		AnalysisSummary analysisSummary1 = mock(AnalysisSummary.class);
-		when(analysisSummary1.format(any())).thenReturn(createAnalysisSummary.apply(1));
-		when(reportGenerator.createAnalysisSummary(analysisDetails1)).thenReturn(analysisSummary1);
-		when(analysisDetails1.getQualityGateStatus()).thenReturn(QualityGate.Status.WARN);
+        AnalysisDetails analysisDetails1 = mock(AnalysisDetails.class);
+        AnalysisSummary analysisSummary1 = mock(AnalysisSummary.class);
+        when(analysisSummary1.format(any())).thenReturn(createAnalysisSummary.apply(1));
+        when(reportGenerator.createAnalysisSummary(analysisDetails1)).thenReturn(analysisSummary1);
+        when(analysisDetails1.getQualityGateStatus()).thenReturn(QualityGate.Status.WARN);
 
-		AnalysisDetails analysisDetails2 = mock(AnalysisDetails.class);
-		AnalysisSummary analysisSummary2 = mock(AnalysisSummary.class);
-		when(analysisSummary2.format(any())).thenReturn(createAnalysisSummary.apply(2));
-		when(reportGenerator.createAnalysisSummary(analysisDetails2)).thenReturn(analysisSummary2);
-		when(analysisDetails2.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
+        AnalysisDetails analysisDetails2 = mock(AnalysisDetails.class);
+        AnalysisSummary analysisSummary2 = mock(AnalysisSummary.class);
+        when(analysisSummary2.format(any())).thenReturn(createAnalysisSummary.apply(2));
+        when(reportGenerator.createAnalysisSummary(analysisDetails2)).thenReturn(analysisSummary2);
+        when(analysisDetails2.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
 
-		AnalysisDetails analysisDetails3 = mock(AnalysisDetails.class);
-		AnalysisSummary analysisSummary3 = mock(AnalysisSummary.class);
-		when(analysisSummary3.format(any())).thenReturn(createAnalysisSummary.apply(3));
-		when(reportGenerator.createAnalysisSummary(analysisDetails3)).thenReturn(analysisSummary3);
-		when(analysisDetails3.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
+        AnalysisDetails analysisDetails3 = mock(AnalysisDetails.class);
+        AnalysisSummary analysisSummary3 = mock(AnalysisSummary.class);
+        when(analysisSummary3.format(any())).thenReturn(createAnalysisSummary.apply(3));
+        when(reportGenerator.createAnalysisSummary(analysisDetails3)).thenReturn(analysisSummary3);
+        when(analysisDetails3.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
 
-		Note note = mock(Note.class);
-		when(note.getAuthor()).thenReturn(sonarqubeUser);
-		when(note.getBody()).thenReturn("[View in SonarQube](http://domain.url/sonar/issue?issues=issueKey1&id=" + PROJECT_KEY + ")");
-		when(note.isResolvable()).thenReturn(true);
-		when(note.isResolved()).thenReturn(false);
+        Note note = mock(Note.class);
+        when(note.getAuthor()).thenReturn(sonarqubeUser);
+        when(note.getBody()).thenReturn("[View in SonarQube](http://domain.url/sonar/issue?issues=issueKey1&id=" + PROJECT_KEY + ")");
+        when(note.isResolvable()).thenReturn(true);
+        when(note.isResolved()).thenReturn(false);
 
-		List<Discussion> discussions = new ArrayList<>();
-		for (int i = 0; i < 5; i++) {
-			Discussion discussion = mock(Discussion.class);
-			when(discussion.getId()).thenReturn("discussion id " + i);
-			when(discussion.getNotes()).thenReturn(Arrays.asList(note));
-			when(gitlabClient.addMergeRequestDiscussion(anyLong(), anyLong(),
-					refEq(new MergeRequestNote("Analysis Details " + i)))).thenReturn(discussion);
-			if (i < 4) {
-				discussions.add(discussion);
-			}
-		}
-		when(gitlabClient.getMergeRequestDiscussions(PROJECT_ID, MERGE_REQUEST_IID)).thenReturn(discussions);
+        List<Discussion> discussions = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            Discussion discussion = mock(Discussion.class);
+            when(discussion.getId()).thenReturn("discussion id " + i);
+            when(discussion.getNotes()).thenReturn(Arrays.asList(note));
+            when(gitlabClient.addMergeRequestDiscussion(anyLong(), anyLong(),
+                    refEq(new MergeRequestNote("Analysis Details " + i)))).thenReturn(discussion);
+            if (i < 4) {
+                discussions.add(discussion);
+            }
+        }
+        when(gitlabClient.getMergeRequestDiscussions(PROJECT_ID, MERGE_REQUEST_IID)).thenReturn(discussions);
 
-		// create previous analysis summaries
-		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails0, analysisSummary0);
-		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails1, analysisSummary1);
-		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails2, analysisSummary2);
-		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails3, analysisSummary3);
-		underTest.decorateQualityGateStatus(analysisDetails, almSettingDto, projectAlmSettingDto);
+        // create previous analysis summaries
+        underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails0, analysisSummary0);
+        underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails1, analysisSummary1);
+        underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails2, analysisSummary2);
+        underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails3, analysisSummary3);
+        underTest.decorateQualityGateStatus(analysisDetails, almSettingDto, projectAlmSettingDto);
 
-		// 5 merge request discussions are added in total
-		ArgumentCaptor<MergeRequestNote> mergeRequestNoteArgumentCaptor = ArgumentCaptor
-				.forClass(MergeRequestNote.class);
-		verify(gitlabClient, times(5)).addMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
-				mergeRequestNoteArgumentCaptor.capture());
+        // 5 merge request discussions are added in total
+        ArgumentCaptor<MergeRequestNote> mergeRequestNoteArgumentCaptor = ArgumentCaptor
+                .forClass(MergeRequestNote.class);
+        verify(gitlabClient, times(5)).addMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
+                mergeRequestNoteArgumentCaptor.capture());
 
-		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(0))
-				.isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 0"));
-		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(1))
-				.isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 1"));
-		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(2))
-				.isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 2"));
-		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(3))
-				.isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 3"));
-		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(4))
-				.isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 4"));
+        assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(0))
+                .isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 0"));
+        assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(1))
+                .isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 1"));
+        assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(2))
+                .isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 2"));
+        assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(3))
+                .isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 3"));
+        assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(4))
+                .isEqualToComparingFieldByField(new MergeRequestNote("Analysis Details 4"));
 
-		// called 6 times as an OK quality gate auto-resolves
-		ArgumentCaptor<String> discussionIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
-		verify(gitlabClient, times(6)).resolveMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
-				discussionIdArgumentCaptor.capture());
+        // called 6 times as an OK quality gate auto-resolves
+        ArgumentCaptor<String> discussionIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
+        verify(gitlabClient, times(6)).resolveMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
+                discussionIdArgumentCaptor.capture());
 
-		// 3 auto-resolves because of OK quality gate
-		assertThat(discussionIdArgumentCaptor.getAllValues().get(0)).isEqualTo("discussion id 3");
-		assertThat(discussionIdArgumentCaptor.getAllValues().get(1)).isEqualTo("discussion id 0");
-		assertThat(discussionIdArgumentCaptor.getAllValues().get(2)).isEqualTo("discussion id 1");
-		assertThat(discussionIdArgumentCaptor.getAllValues().get(3)).isEqualTo("discussion id 2");
-		assertThat(discussionIdArgumentCaptor.getAllValues().get(4)).isEqualTo("discussion id 3");
-		// 4 auto-resolves because of OK quality gate
-		assertThat(discussionIdArgumentCaptor.getAllValues().get(5)).isEqualTo("discussion id 4");
-	}
+        // 3 auto-resolves because of OK quality gate
+        assertThat(discussionIdArgumentCaptor.getAllValues().get(0)).isEqualTo("discussion id 3");
+        assertThat(discussionIdArgumentCaptor.getAllValues().get(1)).isEqualTo("discussion id 0");
+        assertThat(discussionIdArgumentCaptor.getAllValues().get(2)).isEqualTo("discussion id 1");
+        assertThat(discussionIdArgumentCaptor.getAllValues().get(3)).isEqualTo("discussion id 2");
+        assertThat(discussionIdArgumentCaptor.getAllValues().get(4)).isEqualTo("discussion id 3");
+        // 4 auto-resolves because of OK quality gate
+        assertThat(discussionIdArgumentCaptor.getAllValues().get(5)).isEqualTo("discussion id 4");
+    }
 
-	@Test
-	public void shouldDeleteOldSummaryAndResolveSummaryCommentOnSuccessAnalysis() throws IOException {
-		Function<Integer, String> createAnalysisSummary = (index) -> {
-			return "Analysis Details " + index
-					+ "\n Issues Bugs Vulnerabilities Code Smells Coverage and Duplications **Project ID:** View in SonarQube";
-		};
+    @Test
+    public void shouldDeleteOldSummaryAndResolveSummaryCommentOnSuccessAnalysis() throws IOException {
+        Function<Integer, String> createAnalysisSummary = (index) -> {
+            return "Analysis Details " + index
+                    + "\n Issues Bugs Vulnerabilities Code Smells Coverage and Duplications **Project ID:** View in SonarQube";
+        };
 
-		when(analysisDetails.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
-		AnalysisSummary analysisSummary = mock(AnalysisSummary.class);
-		when(analysisSummary.format(any())).thenReturn(createAnalysisSummary.apply(4));
-		when(reportGenerator.createAnalysisSummary(analysisDetails)).thenReturn(analysisSummary);
-		when(analysisDetails.getCommitSha()).thenReturn("commitsha");
+        when(analysisDetails.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
+        AnalysisSummary analysisSummary = mock(AnalysisSummary.class);
+        when(analysisSummary.format(any())).thenReturn(createAnalysisSummary.apply(4));
+        when(reportGenerator.createAnalysisSummary(analysisDetails)).thenReturn(analysisSummary);
+        when(analysisDetails.getCommitSha()).thenReturn("commitsha");
 
-		// instruct to delete old summary comments
-		when(analysisDetails.getScannerProperty(CommunityBranchPlugin.PR_DELETE_ANALYSIS_SUMMARY))
-				.thenReturn(Optional.of(String.valueOf(true)));
+        // instruct to delete old summary comments
+        when(analysisDetails.getScannerProperty(CommunityBranchPlugin.PR_DELETE_ANALYSIS_SUMMARY))
+                .thenReturn(Optional.of(String.valueOf(true)));
 
-		AnalysisDetails analysisDetails0 = mock(AnalysisDetails.class);
-		AnalysisSummary analysisSummary0 = mock(AnalysisSummary.class);
-		when(analysisSummary0.format(any())).thenReturn(createAnalysisSummary.apply(0));
-		when(reportGenerator.createAnalysisSummary(analysisDetails0)).thenReturn(analysisSummary0);
-		when(analysisDetails0.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
+        AnalysisDetails analysisDetails0 = mock(AnalysisDetails.class);
+        AnalysisSummary analysisSummary0 = mock(AnalysisSummary.class);
+        when(analysisSummary0.format(any())).thenReturn(createAnalysisSummary.apply(0));
+        when(reportGenerator.createAnalysisSummary(analysisDetails0)).thenReturn(analysisSummary0);
+        when(analysisDetails0.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
 
-		AnalysisDetails analysisDetails1 = mock(AnalysisDetails.class);
-		AnalysisSummary analysisSummary1 = mock(AnalysisSummary.class);
-		when(analysisSummary1.format(any())).thenReturn(createAnalysisSummary.apply(1));
-		when(reportGenerator.createAnalysisSummary(analysisDetails1)).thenReturn(analysisSummary1);
-		when(analysisDetails1.getQualityGateStatus()).thenReturn(QualityGate.Status.WARN);
+        AnalysisDetails analysisDetails1 = mock(AnalysisDetails.class);
+        AnalysisSummary analysisSummary1 = mock(AnalysisSummary.class);
+        when(analysisSummary1.format(any())).thenReturn(createAnalysisSummary.apply(1));
+        when(reportGenerator.createAnalysisSummary(analysisDetails1)).thenReturn(analysisSummary1);
+        when(analysisDetails1.getQualityGateStatus()).thenReturn(QualityGate.Status.WARN);
 
-		AnalysisDetails analysisDetails2 = mock(AnalysisDetails.class);
-		AnalysisSummary analysisSummary2 = mock(AnalysisSummary.class);
-		when(analysisSummary2.format(any())).thenReturn(createAnalysisSummary.apply(2));
-		when(reportGenerator.createAnalysisSummary(analysisDetails2)).thenReturn(analysisSummary2);
-		when(analysisDetails2.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
+        AnalysisDetails analysisDetails2 = mock(AnalysisDetails.class);
+        AnalysisSummary analysisSummary2 = mock(AnalysisSummary.class);
+        when(analysisSummary2.format(any())).thenReturn(createAnalysisSummary.apply(2));
+        when(reportGenerator.createAnalysisSummary(analysisDetails2)).thenReturn(analysisSummary2);
+        when(analysisDetails2.getQualityGateStatus()).thenReturn(QualityGate.Status.ERROR);
 
-		AnalysisDetails analysisDetails3 = mock(AnalysisDetails.class);
-		AnalysisSummary analysisSummary3 = mock(AnalysisSummary.class);
-		when(analysisSummary3.format(any())).thenReturn(createAnalysisSummary.apply(3));
-		when(reportGenerator.createAnalysisSummary(analysisDetails3)).thenReturn(analysisSummary3);
-		when(analysisDetails3.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
+        AnalysisDetails analysisDetails3 = mock(AnalysisDetails.class);
+        AnalysisSummary analysisSummary3 = mock(AnalysisSummary.class);
+        when(analysisSummary3.format(any())).thenReturn(createAnalysisSummary.apply(3));
+        when(reportGenerator.createAnalysisSummary(analysisDetails3)).thenReturn(analysisSummary3);
+        when(analysisDetails3.getQualityGateStatus()).thenReturn(QualityGate.Status.OK);
 
-		List<Discussion> discussions = new ArrayList<>();
-		for (int i = 0; i < 5; i++) {
-			Note note = mock(Note.class);
-			when(note.getAuthor()).thenReturn(sonarqubeUser);
-			when(note.getBody()).thenReturn(createAnalysisSummary.apply(i) + "\n[View in SonarQube](http://host.domain/issue?issues=issueId&id=" + PROJECT_KEY + ")");
-			when(note.isResolvable()).thenReturn(true);
-			when(note.isResolved()).thenReturn(false);
+        List<Discussion> discussions = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            Note note = mock(Note.class);
+            when(note.getAuthor()).thenReturn(sonarqubeUser);
+            when(note.getBody()).thenReturn(createAnalysisSummary.apply(i) + "\n[View in SonarQube](http://host.domain/issue?issues=issueId&id=" + PROJECT_KEY + ")");
+            when(note.isResolvable()).thenReturn(true);
+            when(note.isResolved()).thenReturn(false);
 
-			Discussion discussion = mock(Discussion.class);
-			when(discussion.getId()).thenReturn("discussion id " + i);
-			when(discussion.getNotes()).thenReturn(Arrays.asList(note));
-			when(gitlabClient.addMergeRequestDiscussion(anyLong(), anyLong(),
-					refEq(new MergeRequestNote(createAnalysisSummary.apply(i))))).thenReturn(discussion);
-			if (i < 4) {
-				discussions.add(discussion);
-			}
-		}
-		when(gitlabClient.getMergeRequestDiscussions(PROJECT_ID, MERGE_REQUEST_IID)).thenReturn(discussions);
+            Discussion discussion = mock(Discussion.class);
+            when(discussion.getId()).thenReturn("discussion id " + i);
+            when(discussion.getNotes()).thenReturn(Arrays.asList(note));
+            when(gitlabClient.addMergeRequestDiscussion(anyLong(), anyLong(),
+                    refEq(new MergeRequestNote(createAnalysisSummary.apply(i))))).thenReturn(discussion);
+            if (i < 4) {
+                discussions.add(discussion);
+            }
+        }
+        when(gitlabClient.getMergeRequestDiscussions(PROJECT_ID, MERGE_REQUEST_IID)).thenReturn(discussions);
 
-		// create previous analysis summaries
-		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails0, analysisSummary0);
-		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails1, analysisSummary1);
-		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails2, analysisSummary2);
-		underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails3, analysisSummary3);
-		underTest.decorateQualityGateStatus(analysisDetails, almSettingDto, projectAlmSettingDto);
+        // create previous analysis summaries
+        underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails0, analysisSummary0);
+        underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails1, analysisSummary1);
+        underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails2, analysisSummary2);
+        underTest.submitSummaryNote(gitlabClient, mergeRequest, analysisDetails3, analysisSummary3);
+        underTest.decorateQualityGateStatus(analysisDetails, almSettingDto, projectAlmSettingDto);
 
-		// in total, 5 comments are added
-		ArgumentCaptor<MergeRequestNote> mergeRequestNoteArgumentCaptor = ArgumentCaptor
-				.forClass(MergeRequestNote.class);
-		verify(gitlabClient, times(5)).addMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
-				mergeRequestNoteArgumentCaptor.capture());
+        // in total, 5 comments are added
+        ArgumentCaptor<MergeRequestNote> mergeRequestNoteArgumentCaptor = ArgumentCaptor
+                .forClass(MergeRequestNote.class);
+        verify(gitlabClient, times(5)).addMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
+                mergeRequestNoteArgumentCaptor.capture());
 
-		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(0))
-				.isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(0)));
-		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(1))
-				.isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(1)));
-		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(2))
-				.isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(2)));
-		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(3))
-				.isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(3)));
-		assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(4))
-				.isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(4)));
+        assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(0))
+                .isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(0)));
+        assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(1))
+                .isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(1)));
+        assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(2))
+                .isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(2)));
+        assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(3))
+                .isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(3)));
+        assertThat(mergeRequestNoteArgumentCaptor.getAllValues().get(4))
+                .isEqualToComparingFieldByField(new MergeRequestNote(createAnalysisSummary.apply(4)));
 
-		// called 2 times as an OK quality gate auto-resolves
-		ArgumentCaptor<String> discussionIdArgumentResolveCaptor = ArgumentCaptor.forClass(String.class);
-		verify(gitlabClient, times(2)).resolveMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
-				discussionIdArgumentResolveCaptor.capture());
+        // called 2 times as an OK quality gate auto-resolves
+        ArgumentCaptor<String> discussionIdArgumentResolveCaptor = ArgumentCaptor.forClass(String.class);
+        verify(gitlabClient, times(2)).resolveMergeRequestDiscussion(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
+                discussionIdArgumentResolveCaptor.capture());
 
-		assertThat(discussionIdArgumentResolveCaptor.getAllValues().get(0)).isEqualTo("discussion id 3");
-		assertThat(discussionIdArgumentResolveCaptor.getAllValues().get(1)).isEqualTo("discussion id 4");
+        assertThat(discussionIdArgumentResolveCaptor.getAllValues().get(0)).isEqualTo("discussion id 3");
+        assertThat(discussionIdArgumentResolveCaptor.getAllValues().get(1)).isEqualTo("discussion id 4");
 
-		// called 4 times for existing summaries
-		ArgumentCaptor<String> discussionIdArgumentDeleteCaptor = ArgumentCaptor.forClass(String.class);
-		ArgumentCaptor<Long> noteIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
-		verify(gitlabClient, times(4)).deleteMergeRequestDiscussionNote(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
-				discussionIdArgumentDeleteCaptor.capture(), noteIdArgumentCaptor.capture());
+        // called 4 times for existing summaries
+        ArgumentCaptor<String> discussionIdArgumentDeleteCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Long> noteIdArgumentCaptor = ArgumentCaptor.forClass(Long.class);
+        verify(gitlabClient, times(4)).deleteMergeRequestDiscussionNote(eq(PROJECT_ID), eq(MERGE_REQUEST_IID),
+                discussionIdArgumentDeleteCaptor.capture(), noteIdArgumentCaptor.capture());
 
-		assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(0)).isEqualTo("discussion id 0");
-		assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(1)).isEqualTo("discussion id 1");
-		assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(2)).isEqualTo("discussion id 2");
-		assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(3)).isEqualTo("discussion id 3");
-	}
+        assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(0)).isEqualTo("discussion id 0");
+        assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(1)).isEqualTo("discussion id 1");
+        assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(2)).isEqualTo("discussion id 2");
+        assertThat(discussionIdArgumentDeleteCaptor.getAllValues().get(3)).isEqualTo("discussion id 3");
+    }
 
     @Test
     public void shouldSubmitSuccessfulPipelineStatusAndResolvedSummaryCommentOnSuccessAnalysis() throws IOException {

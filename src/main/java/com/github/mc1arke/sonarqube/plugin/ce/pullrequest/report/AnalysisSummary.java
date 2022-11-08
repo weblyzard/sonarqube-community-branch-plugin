@@ -173,44 +173,51 @@ public final class AnalysisSummary {
 
         List<String> failedConditions = getFailedQualityGateConditions();
 
-        Document document = new Document(new Paragraph(new Image(getStatusDescription(), getStatusImageUrl())),
+        Document document = new Document(
+                new Paragraph(
+                        new Image(getStatusDescription(), getStatusImageUrl(), true)
+                ),
                 failedConditions.isEmpty() ? new Text("") :
-                        new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
-                                com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.BULLET,
-                                failedConditions.stream()
-                                        .map(Text::new)
-                                        .map(ListItem::new)
-                                        .toArray(ListItem[]::new)),
+                    new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
+                            com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.NONE,
+                            failedConditions.stream().map(Text::new).map(ListItem::new).toArray(ListItem[]::new)),
                 new Heading(1, new Text("Analysis Details")),
                 new Heading(2, new Text(pluralOf(getTotalIssueCount(), "Issue", "Issues"))),
                 new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
-                        com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.BULLET,
-                        new ListItem(new Image("Bug", getBugImageUrl()),
-                                new Text(" "),
+                        com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.NONE,
+                        new ListItem(
+                                new Image("Bug", getBugImageUrl(), true),
+                                new Text(" ", true),
                                 new Text(pluralOf(getBugCount(), "Bug", "Bugs"))),
-                        new ListItem(new Image("Vulnerability", getVulnerabilityImageUrl()),
-                                new Text(" "),
+                        new ListItem(
+                                new Image("Vulnerability", getVulnerabilityImageUrl(), true),
+                                new Text(" ", true),
                                 new Text(pluralOf(getVulnerabilityCount() + getSecurityHotspotCount(), "Vulnerability", "Vulnerabilities"))),
-                        new ListItem(new Image("Code Smell", getCodeSmellImageUrl()),
-                                new Text(" "),
+                        new ListItem(
+                                new Image("Code Smell", getCodeSmellImageUrl(), true),
+                                new Text(" ", true),
                                 new Text(pluralOf(getCodeSmellCount(), "Code Smell", "Code Smells")))),
                 new Heading(2, new Text("Coverage and Duplications")),
                 new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
-                        com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.BULLET,
-                        new ListItem(new Image("Coverage", getCoverageImageUrl()),
-                                new Text(" "), new Text(
-                                Optional.ofNullable(getNewCoverage())
-                                        .map(decimalFormat::format)
-                                        .map(i -> i + "% Coverage")
-                                        .orElse("No coverage information") + " (" +
-                                        decimalFormat.format(Optional.ofNullable(getCoverage()).orElse(BigDecimal.valueOf(0))) + "% Estimated after merge)")),
-                        new ListItem(new Image("Duplications", getDuplicationsImageUrl()),
-                                new Text(" "),
-                                new Text(Optional.ofNullable(getNewDuplications())
-                                        .map(decimalFormat::format)
-                                        .map(i -> i + "% Duplicated Code")
-                                        .orElse("No duplication information") + " (" + decimalFormat.format(getDuplications()) + "% Estimated after merge)"))),
-                new Paragraph(new Text(String.format("**Project ID:** %s", getProjectKey()))),
+                        com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.NONE,
+                        new ListItem(
+                                new Image("Coverage", getCoverageImageUrl()),
+                                new Text(" ", true),
+                                new Text(
+                                        Optional.ofNullable(getNewCoverage())
+                                            .map(decimalFormat::format)
+                                            .map(i -> i + "% Coverage")
+                                            .orElse("No coverage information")
+                                        + " (" + decimalFormat.format(Optional.ofNullable(getCoverage()).orElse(BigDecimal.valueOf(0))) + "% Estimated after merge)")),
+                        new ListItem(
+                                new Image("Duplications", getDuplicationsImageUrl()),
+                                new Text(" ", true),
+                                new Text(
+                                        Optional.ofNullable(newDuplications)
+                                            .map(decimalFormat::format)
+                                            .map(i -> i + "% Duplicated Code")
+                                            .orElse("No duplication information")
+                                        + " (" + decimalFormat.format(duplications) + "% Estimated after merge)"))),
                 new Paragraph(new Link(getDashboardUrl(), new Text("View in SonarQube"))));
 
         return formatterFactory.documentFormatter().format(document);

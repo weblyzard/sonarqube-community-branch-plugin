@@ -22,11 +22,17 @@ public final class Image extends Node {
 
     private final String altText;
     private final String source;
+    private final boolean suppressLink;
 
     public Image(String altText, String source) {
+        this(altText, source, false);
+    }
+
+    public Image(String altText, String source, boolean suppressLink) {
         super();
         this.altText = altText;
         this.source = source;
+        this.suppressLink = suppressLink;
     }
 
     String getAltText() {
@@ -35,6 +41,10 @@ public final class Image extends Node {
 
     String getSource() {
         return source;
+    }
+
+    boolean suppressLink() {
+        return suppressLink;
     }
 
     @Override

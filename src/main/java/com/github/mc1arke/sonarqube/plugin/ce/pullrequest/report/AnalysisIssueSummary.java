@@ -95,20 +95,21 @@ public final class AnalysisIssueSummary {
 
     public String format(FormatterFactory formatterFactory) {
         Long effort = getEffortInMinutes();
-        Node effortNode = (null == effort ? new Text("") : new Paragraph(new Text(String.format("**Duration (min):** %s", effort))));
+        Node effortNode = (null == effort ? new Text("") : new Text(String.format(" %s min", effort), true));
 
-        Node resolutionNode = (StringUtils.isBlank(getResolution()) ? new Text("") : new Paragraph(new Text(String.format("**Resolution:** %s", getResolution()))));
+        Node resolutionNode = (StringUtils.isBlank(getResolution()) ? new Text("") : new Paragraph(new Text(String.format(" (**Resolution:** %s)", resolution), true)));
 
         Document document = new Document(
-                new Paragraph(new Text(String.format("**Type:** %s ", getType())), new Image(getType(), getTypeImageUrl())),
-                new Paragraph(new Text(String.format("**Severity:** %s ", getSeverity())), new Image(getSeverity(), getSeverityImageUrl())),
-                new Paragraph(new Text(String.format("**Message:** %s", getMessage()))),
-                effortNode,
+                new Paragraph(
+                        new Image(getSeverity(), getSeverityImageUrl(), true),
+                        new Text(" ", true),
+                        new Image(getType(), getTypeImageUrl(), true),
+                        effortNode
+                ),
+                new Paragraph(new Text(getMessage())),
                 resolutionNode,
-                new Paragraph(new Text(String.format("**Project ID:** %s **Issue ID:** %s", getProjectKey(), getIssueKey()))),
                 new Paragraph(new Link(getIssueUrl(), new Text("View in SonarQube")))
         );
-
         return formatterFactory.documentFormatter().format(document);
     }
 

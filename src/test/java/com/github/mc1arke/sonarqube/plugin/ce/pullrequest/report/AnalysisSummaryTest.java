@@ -76,37 +76,36 @@ class AnalysisSummaryTest {
         ArgumentCaptor<Document> documentArgumentCaptor = ArgumentCaptor.forClass(Document.class);
         verify(formatter).format(documentArgumentCaptor.capture());
 
-        Document expectedDocument = new Document(new Paragraph(new Image("status description", "statusImageUrl")),
-                new List(List.Style.BULLET,
+        Document expectedDocument = new Document(new Paragraph(new Image("status description", "statusImageUrl", true)),
+                new List(List.Style.NONE,
                         new ListItem(new Text("issuea")),
                         new ListItem(new Text("issueb")),
                         new ListItem(new Text("issuec"))),
                 new Heading(1, new Text("Analysis Details")),
                 new Heading(2, new Text("666 Issues")),
-                new List(List.Style.BULLET,
+                new List(List.Style.NONE,
                     new ListItem(
-                        new Image("Bug","bugImageUrl"),
-                        new Text(" "),
+                        new Image("Bug","bugImageUrl", true),
+                        new Text(" ", true),
                         new Text("911 Bugs")),
                 new ListItem(
-                        new Image("Vulnerability","vulnerabilityImageUrl"),
-                        new Text(" "),
+                        new Image("Vulnerability","vulnerabilityImageUrl", true),
+                        new Text(" ", true),
                         new Text("165 Vulnerabilities")),
                 new ListItem(
-                        new Image("Code Smell", "codeSmellImageUrl"),
-                        new Text(" "),
+                        new Image("Code Smell", "codeSmellImageUrl", true),
+                        new Text(" ", true),
                         new Text("1 Code Smell"))),
                 new Heading(2, new Text("Coverage and Duplications")),
-                new List(List.Style.BULLET,
+                new List(List.Style.NONE,
                         new ListItem(
                             new Image("Coverage", "codeCoverageImageUrl"),
-                            new Text(" "),
+                            new Text(" ", true),
                             new Text("99.00% Coverage (303.00% Estimated after merge)")),
                         new ListItem(
                                 new Image("Duplications", "duplicationsImageUrl"),
-                                new Text(" "),
+                                new Text(" ", true),
                                 new Text("199.00% Duplicated Code (66.00% Estimated after merge)"))),
-                new Paragraph(new Text("**Project ID:** projectKey")),
                 new Paragraph(new Link("dashboardUrl", new Text("View in SonarQube"))));
 
         assertThat(documentArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(expectedDocument);

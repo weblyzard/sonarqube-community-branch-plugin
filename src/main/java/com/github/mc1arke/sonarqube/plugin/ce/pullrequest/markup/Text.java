@@ -21,14 +21,24 @@ package com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup;
 public final class Text extends Node {
 
     private final String content;
+    private final boolean allowLeadingTrailingWhitespace;
 
     public Text(String content) {
+        this(content, false);
+    }
+
+    public Text(String content, boolean allowLeadingTrailingWhitespace) {
         super();
         this.content = content;
+        this.allowLeadingTrailingWhitespace = allowLeadingTrailingWhitespace;
     }
 
     String getContent() {
         return content;
+    }
+
+    boolean allowLeadingTrailingWhitespace() {
+        return allowLeadingTrailingWhitespace;
     }
 
     @Override

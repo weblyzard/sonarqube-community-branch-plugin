@@ -66,17 +66,13 @@ class AnalysisIssueSummaryTest {
                 .isEqualTo(
                     new Document(
                             new Paragraph(
-                                    new Text("**Type:** type "),
-                                    new Image("type", "typeImageUrl")
+                                    new Image("severity", "severityImageUrl", true),
+                                    new Text(" ", true),
+                                    new Image("type", "typeImageUrl", true),
+                                    new Text(" 101 min", true)
                             ),
-                            new Paragraph(
-                                    new Text("**Severity:** severity "),
-                                    new Image("severity", "severityImageUrl")
-                            ),
-                            new Paragraph(new Text("**Message:** message")),
-                            new Paragraph(new Text("**Duration (min):** 101")),
-                            new Paragraph(new Text("**Resolution:** resolution")),
-                            new Paragraph(new Text("**Project ID:** projectKey **Issue ID:** issueKey")),
+                            new Paragraph(new Text("message")),
+                            new Paragraph(new Text(" (**Resolution:** resolution)", true)),
                             new Paragraph(new Link("issueUrl", new Text("View in SonarQube")))
                 )
         );

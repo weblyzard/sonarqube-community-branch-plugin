@@ -40,7 +40,13 @@ public final class MarkdownFormatterFactory extends BaseFormatterFactory {
 
     @Override
     public Formatter<Image> imageFormatter() {
-        return node -> String.format("![%s](%s)", node.getAltText(), node.getSource());
+        return node -> {
+            String imgTag = String.format("![%s](%s)", node.getAltText(), node.getSource());
+            if (node.suppressLink()) {
+                imgTag = String.format("<a title=\"%s\">%s</a>", htmlEscaper().escape(node.getAltText()), imgTag);
+            }
+            return imgTag;
+        };
     }
 
     @Override
@@ -51,12 +57,21 @@ public final class MarkdownFormatterFactory extends BaseFormatterFactory {
     @Override
     public Formatter<List> listFormatter() {
         return node -> {
+            // check valid list style
+            if (node.getStyle() != List.Style.BULLET && node.getStyle() != List.Style.NONE) {
+                throw new IllegalArgumentException("Unknown list type: " + node.getStyle());
+            }
             StringBuilder output = new StringBuilder();
             node.getChildren().forEach(i -> {
+                // "bullet" needs a prefix
                 if (node.getStyle() == List.Style.BULLET) {
-                    output.append("- ").append(format(i));
-                } else {
-                    throw new IllegalArgumentException("Unknown list type: " + node.getStyle());
+                    output.append("- ");
+                }
+                // output actual item
+                output.append(format(i));
+                // "none" needs a double trailing slash to force a visual linebreak
+                if (node.getStyle() == List.Style.NONE) {
+                    output.append("  ");
                 }
                 output.append(System.lineSeparator());
             });
@@ -77,6 +92,12 @@ public final class MarkdownFormatterFactory extends BaseFormatterFactory {
 
     @Override
     public Formatter<Text> textFormatter() {
-        return node -> htmlEscaper().escape(node.getContent());
+        return node -> {
+            String formattedText = htmlEscaper().escape(node.getContent());
+            if (!node.allowLeadingTrailingWhitespace()) {
+                formattedText = formattedText.trim();
+            }
+            return formattedText;
+        };
     }
 }

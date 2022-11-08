@@ -51,7 +51,11 @@ public final class MarkdownFormatterFactory implements FormatterFactory {
         return new BaseFormatter<Image>() {
             @Override
             public String format(Image node, FormatterFactory formatterFactory) {
-                return String.format("![%s](%s)", node.getAltText(), node.getSource());
+                String imgTag = String.format("![%s](%s)", node.getAltText(), node.getSource());
+                if (node.suppressLink()) {
+                    imgTag = String.format("<a title=\"%s\">%s</a>", htmlEscaper().escape(node.getAltText()), imgTag);
+                }
+                return imgTag;
             }
         };
     }
@@ -71,12 +75,21 @@ public final class MarkdownFormatterFactory implements FormatterFactory {
         return new BaseFormatter<List>() {
             @Override
             public String format(List node, FormatterFactory formatterFactory) {
+                // check valid list style
+                if (node.getStyle() != List.Style.BULLET && node.getStyle() != List.Style.NONE) {
+                    throw new IllegalArgumentException("Unknown list type: " + node.getStyle());
+                }
                 StringBuilder output = new StringBuilder();
                 node.getChildren().forEach(i -> {
+                    // "bullet" needs a prefix
                     if (node.getStyle() == List.Style.BULLET) {
-                        output.append("- ").append(listItemFormatter().format((ListItem) i, formatterFactory));
-                    } else {
-                        throw new IllegalArgumentException("Unknown list type: " + node.getStyle());
+                        output.append("- ");
+                    }
+                    // output actual item
+                    output.append(listItemFormatter().format((ListItem) i, formatterFactory));
+                    // "none" needs a double trailing slash to force a visual linebreak
+                    if (node.getStyle() == List.Style.NONE) {
+                        output.append("  ");
                     }
                     output.append(System.lineSeparator());
                 });
@@ -111,7 +124,11 @@ public final class MarkdownFormatterFactory implements FormatterFactory {
         return new BaseFormatter<Text>() {
             @Override
             public String format(Text node, FormatterFactory formatterFactory) {
-                return htmlEscaper().escape(node.getContent()).trim();
+                String formattedText = htmlEscaper().escape(node.getContent());
+                if (!node.allowLeadingTrailingWhitespace()) {
+                    formattedText = formattedText.trim();
+                }
+                return formattedText;
             }
         };
     }

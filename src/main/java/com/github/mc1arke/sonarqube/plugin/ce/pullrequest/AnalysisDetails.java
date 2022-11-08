@@ -189,53 +189,45 @@ public class AnalysisDetails {
 
         String baseImageUrl = getBaseImageUrl();
 
-        Document document = new Document(new Paragraph((QualityGate.Status.OK == getQualityGateStatus() ?
-                                                        new Image("Passed", baseImageUrl +
-                                                                            "/checks/QualityGateBadge/passed.svg?sanitize=true") :
-                                                        new Image("Failed", baseImageUrl +
-                                                                            "/checks/QualityGateBadge/failed.svg?sanitize=true"))),
-                                         failedConditions.isEmpty() ? new Text("") :
-                                         new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
-                                                 com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.BULLET,
-                                                 failedConditions.stream().map(c -> new ListItem(new Text(format(c))))
-                                                         .toArray(ListItem[]::new)),
-                                         new Heading(1, new Text("Analysis Details")), new Heading(2, new Text(
-                issueTotal + " Issue" + (issueCounts.values().stream().mapToLong(l -> l).sum() == 1 ? "" : "s"))),
-                                         new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
-                                                 com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.BULLET,
-                                                 new ListItem(new Image("Bug",
-                                                                        baseImageUrl + "/common/bug.svg?sanitize=true"),
-                                                              new Text(" "), new Text(
-                                                         pluralOf(issueCounts.get(RuleType.BUG), "Bug", "Bugs"))),
-                                                 new ListItem(new Image("Vulnerability", baseImageUrl +
-                                                                                         "/common/vulnerability.svg?sanitize=true"),
-                                                              new Text(" "), new Text(pluralOf(
-                                                         issueCounts.get(RuleType.VULNERABILITY) +
-                                                         issueCounts.get(RuleType.SECURITY_HOTSPOT), "Vulnerability",
-                                                         "Vulnerabilities"))), new ListItem(new Image("Code Smell",
-                                                                                                      baseImageUrl +
-                                                                                                      "/common/code_smell.svg?sanitize=true"),
-                                                                                            new Text(" "), new Text(
-                                                 pluralOf(issueCounts.get(RuleType.CODE_SMELL), "Code Smell",
-                                                          "Code Smells")))),
-                                         new Heading(2, new Text("Coverage and Duplications")),
-                                         new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
-                                                 com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.BULLET,
-                                                 new ListItem(createCoverageImage(newCoverage, baseImageUrl),
-                                                              new Text(" "), new Text(
-                                                         Optional.ofNullable(newCoverage).map(decimalFormat::format)
-                                                                 .map(i -> i + "% Coverage")
-                                                                 .orElse("No coverage information") + " (" +
-                                                         decimalFormat.format(Optional.ofNullable(coverage).orElse(BigDecimal.valueOf(0))) + "% Estimated after merge)")),
-                                                 new ListItem(createDuplicateImage(newDuplications, baseImageUrl),
-                                                              new Text(" "), new Text(
-                                                         Optional.ofNullable(newDuplications).map(decimalFormat::format)
-                                                                 .map(i -> i + "% Duplicated Code")
-                                                                 .orElse("No duplication information") + " (" +
-                                                         decimalFormat.format(duplications) +
-                                                         "% Estimated after merge)"))),
-                                         new Paragraph(new Text(String.format("**Project ID:** %s", project.getKey()))),
-                                         new Paragraph(new Link(getDashboardUrl(), new Text("View in SonarQube"))));
+        Document document = new Document(
+                new Paragraph((QualityGate.Status.OK == getQualityGateStatus() ?
+                        new Image("Passed", baseImageUrl + "/checks/QualityGateBadge/passed.svg?sanitize=true", true) :
+                            new Image("Failed", baseImageUrl + "/checks/QualityGateBadge/failed.svg?sanitize=true", true))
+                ),
+                failedConditions.isEmpty() ? new Text("") :
+                    new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
+                            com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.NONE,
+                            failedConditions.stream().map(c -> new ListItem(new Text(format(c)))).toArray(ListItem[]::new)),
+                new Heading(1, new Text("Analysis Details")),
+                new Heading(2, new Text(issueTotal + " Issue" + (issueCounts.values().stream().mapToLong(l -> l).sum() == 1 ? "" : "s"))),
+                new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
+                        com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.NONE,
+                        new ListItem(
+                                new Image("Bug", baseImageUrl + "/common/bug.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text(pluralOf(issueCounts.get(RuleType.BUG), "Bug", "Bugs"))),
+                        new ListItem(
+                                new Image("Vulnerability", baseImageUrl + "/common/vulnerability.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text(pluralOf(issueCounts.get(RuleType.VULNERABILITY) + issueCounts.get(RuleType.SECURITY_HOTSPOT), "Vulnerability", "Vulnerabilities"))),
+                        new ListItem(
+                                new Image("Code Smell", baseImageUrl + "/common/code_smell.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text(pluralOf(issueCounts.get(RuleType.CODE_SMELL), "Code Smell", "Code Smells")))),
+                new Heading(2, new Text("Coverage and Duplications")),
+                new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
+                        com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.NONE,
+                        new ListItem(
+                                createCoverageImage(newCoverage, baseImageUrl),
+                                new Text(" ", true),
+                                new Text(Optional.ofNullable(newCoverage).map(decimalFormat::format).map(i -> i + "% Coverage").orElse("No coverage information")
+                                        + " (" + decimalFormat.format(Optional.ofNullable(coverage).orElse(BigDecimal.valueOf(0))) + "% Estimated after merge)")),
+                        new ListItem(
+                                createDuplicateImage(newDuplications, baseImageUrl),
+                                new Text(" ", true),
+                                new Text(Optional.ofNullable(newDuplications).map(decimalFormat::format).map(i -> i + "% Duplicated Code").orElse("No duplication information")
+                                        + " (" + decimalFormat.format(duplications) + "% Estimated after merge)"))),
+                new Paragraph(new Link(getDashboardUrl(), new Text("View in SonarQube"))));
 
         return formatterFactory.documentFormatter().format(document, formatterFactory);
     }
@@ -246,18 +238,20 @@ public class AnalysisDetails {
         String baseImageUrl = getBaseImageUrl();
 
         Long effort = issue.effortInMinutes();
-        Node effortNode = (null == effort ? new Text("") : new Paragraph(new Text(String.format("**Duration (min):** %s", effort))));
+        Node effortNode = (null == effort ? new Text("") : new Text(String.format(" %s min", effort), true));
 
         String resolution = issue.resolution();
-        Node resolutionNode = (StringUtils.isBlank(resolution) ? new Text("") : new Paragraph(new Text(String.format("**Resolution:** %s ", resolution))));
+        Node resolutionNode = (StringUtils.isBlank(resolution) ? new Text("") : new Paragraph(new Text(String.format(" (**Resolution:** %s)", resolution), true)));
 
         Document document = new Document(
-                new Paragraph(new Text(String.format("**Type:** %s ", issue.type().name())), new Image(issue.type().name(), String.format("%s/checks/IssueType/%s.svg?sanitize=true", baseImageUrl, issue.type().name().toLowerCase()))),
-                new Paragraph(new Text(String.format("**Severity:** %s ", issue.severity())), new Image(issue.severity(), String.format("%s/checks/Severity/%s.svg?sanitize=true", baseImageUrl, issue.severity().toLowerCase()))),
-                new Paragraph(new Text(String.format("**Message:** %s", issue.getMessage()))),
-                effortNode,
+                new Paragraph(
+                        new Image(issue.severity(), String.format("%s/checks/Severity/%s-text.svg?sanitize=true", baseImageUrl, issue.severity().toLowerCase()), true),
+                        new Text(" ", true),
+                        new Image(issue.type().name(), String.format("%s/checks/IssueType/%s-text.svg?sanitize=true", baseImageUrl, issue.type().name().toLowerCase()), true),
+                        effortNode
+                ),
+                new Paragraph(new Text(issue.getMessage())),
                 resolutionNode,
-                new Paragraph(new Text(String.format("**Project ID:** %s **Issue ID:** %s", project.getKey(), issue.key()))),
                 new Paragraph(new Link(getIssueUrl(issue), new Text("View in SonarQube")))
         );
         return formatterFactory.documentFormatter().format(document, formatterFactory);
@@ -292,7 +286,7 @@ public class AnalysisDetails {
     private static Image createCoverageImage(BigDecimal coverage, String baseImageUrl) {
         if (null == coverage) {
             return new Image("No coverage information",
-                             baseImageUrl + "/checks/CoverageChart/NoCoverageInfo.svg?sanitize=true");
+                             baseImageUrl + "/checks/CoverageChart/NoCoverageInfo.svg?sanitize=true", true);
         }
         BigDecimal matchedLevel = BigDecimal.ZERO;
         for (BigDecimal level : COVERAGE_LEVELS) {
@@ -302,13 +296,13 @@ public class AnalysisDetails {
             }
         }
         return new Image(matchedLevel + " percent coverage",
-                         baseImageUrl + "/checks/CoverageChart/" + matchedLevel + ".svg?sanitize=true");
+                         baseImageUrl + "/checks/CoverageChart/" + matchedLevel + ".svg?sanitize=true", true);
     }
 
     private static Image createDuplicateImage(BigDecimal duplications, String baseImageUrl) {
         if (null == duplications) {
             return new Image("No duplication information",
-                             baseImageUrl + "/checks/Duplications/NoDuplicationInfo.svg?sanitize=true");
+                             baseImageUrl + "/checks/Duplications/NoDuplicationInfo.svg?sanitize=true", true);
         }
         String matchedLevel = "20plus";
         for (DuplicationMapping level : DUPLICATION_LEVELS) {
@@ -318,7 +312,7 @@ public class AnalysisDetails {
             }
         }
         return new Image(matchedLevel + " percent duplication",
-                         baseImageUrl + "/checks/Duplications/" + matchedLevel + ".svg?sanitize=true");
+                         baseImageUrl + "/checks/Duplications/" + matchedLevel + ".svg?sanitize=true", true);
     }
 
 

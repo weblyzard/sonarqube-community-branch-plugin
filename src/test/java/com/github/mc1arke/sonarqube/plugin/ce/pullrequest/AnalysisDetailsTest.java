@@ -309,53 +309,42 @@ public class AnalysisDetailsTest {
         ArgumentCaptor<Document> documentArgumentCaptor = ArgumentCaptor.forClass(Document.class);
         verify(formatter).format(documentArgumentCaptor.capture(), eq(formatterFactory));
 
-        Document expectedDocument = new Document(new Paragraph(new Image("Failed",
-                                                                         "http://localhost:9000/static/communityBranchPlugin/checks/QualityGateBadge/failed.svg?sanitize=true")),
-                                                 new List(List.Style.BULLET,
-                                                          new ListItem(new Text("12 Lines to Cover (is less than 20)")),
-                                                          new ListItem(new Text("2 Code Smells (is greater than 0)")),
-                                                          new ListItem(new Text(
-                                                                  "68.00% Line Coverage (is less than 80.00%)")),
-                                                          new ListItem(new Text(
-                                                                  "E Security Rating on New Code (is worse than D)")),
-                                                          new ListItem(
-                                                                  new Text("A Reliability Rating (is better than C)")),
-                                                          new ListItem(new Text(
-                                                                  "16.00% Condition Coverage (is greater than 15.00%)"))),
-                                                 new Heading(1, new Text("Analysis Details")),
-                                                 new Heading(2, new Text("5 Issues")), new List(List.Style.BULLET,
-                                                                                                new ListItem(
-                                                                                                        new Image("Bug",
-                                                                                                                  "http://localhost:9000/static/communityBranchPlugin/common/bug.svg?sanitize=true"),
-                                                                                                        new Text(" "),
-                                                                                                        new Text(
-                                                                                                                "2 Bugs")),
-                                                                                                new ListItem(new Image(
-                                                                                                        "Vulnerability",
-                                                                                                        "http://localhost:9000/static/communityBranchPlugin/common/vulnerability.svg?sanitize=true"),
-                                                                                                             new Text(
-                                                                                                                     " "),
-                                                                                                             new Text(
-                                                                                                                     "2 Vulnerabilities")),
-                                                                                                new ListItem(new Image(
-                                                                                                        "Code Smell",
-                                                                                                        "http://localhost:9000/static/communityBranchPlugin/common/code_smell.svg?sanitize=true"),
-                                                                                                             new Text(
-                                                                                                                     " "),
-                                                                                                             new Text(
-                                                                                                                     "1 Code Smell"))),
-                                                 new Heading(2, new Text("Coverage and Duplications")),
-                                                 new List(List.Style.BULLET, new ListItem(
-                                                         new Image("No coverage information",
-                                                                   "http://localhost:9000/static/communityBranchPlugin/checks/CoverageChart/NoCoverageInfo.svg?sanitize=true"),
-                                                         new Text(" "), new Text(
-                                                         "No coverage information (12.30% Estimated after merge)")),
-                                                          new ListItem(new Image("No duplication information",
-                                                                                 "http://localhost:9000/static/communityBranchPlugin/checks/Duplications/NoDuplicationInfo.svg?sanitize=true"),
-                                                                       new Text(" "), new Text(
-                                                                  "No duplication information (12.30% Estimated after merge)"))),
-                                                 new Paragraph(new Text("**Project ID:** Project Key")),
-                                                 new Paragraph(new Link("http://localhost:9000/dashboard?id=Project+Key&pullRequest=5", new Text("View in SonarQube"))));
+        Document expectedDocument = new Document(
+                new Paragraph(
+                        new Image("Failed", "http://localhost:9000/static/communityBranchPlugin/checks/QualityGateBadge/failed.svg?sanitize=true", true)),
+                new List(List.Style.NONE,
+                        new ListItem(new Text("12 Lines to Cover (is less than 20)")),
+                        new ListItem(new Text("2 Code Smells (is greater than 0)")),
+                        new ListItem(new Text("68.00% Line Coverage (is less than 80.00%)")),
+                        new ListItem(new Text("E Security Rating on New Code (is worse than D)")),
+                        new ListItem(new Text("A Reliability Rating (is better than C)")),
+                        new ListItem(new Text("16.00% Condition Coverage (is greater than 15.00%)"))),
+                new Heading(1, new Text("Analysis Details")),
+                new Heading(2, new Text("5 Issues")),
+                new List(List.Style.NONE,
+                        new ListItem(
+                                new Image("Bug", "http://localhost:9000/static/communityBranchPlugin/common/bug.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("2 Bugs")),
+                        new ListItem(
+                                new Image("Vulnerability", "http://localhost:9000/static/communityBranchPlugin/common/vulnerability.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("2 Vulnerabilities")),
+                        new ListItem(
+                                new Image("Code Smell", "http://localhost:9000/static/communityBranchPlugin/common/code_smell.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("1 Code Smell"))),
+                new Heading(2, new Text("Coverage and Duplications")),
+                new List(List.Style.NONE,
+                        new ListItem(
+                                new Image("No coverage information", "http://localhost:9000/static/communityBranchPlugin/checks/CoverageChart/NoCoverageInfo.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("No coverage information (12.30% Estimated after merge)")),
+                        new ListItem(
+                                new Image("No duplication information", "http://localhost:9000/static/communityBranchPlugin/checks/Duplications/NoDuplicationInfo.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("No duplication information (12.30% Estimated after merge)"))),
+                new Paragraph(new Link("http://localhost:9000/dashboard?id=Project+Key&pullRequest=5", new Text("View in SonarQube"))));
 
         assertThat(documentArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(expectedDocument);
 
@@ -421,42 +410,36 @@ public class AnalysisDetailsTest {
         ArgumentCaptor<Document> documentArgumentCaptor = ArgumentCaptor.forClass(Document.class);
         verify(formatter).format(documentArgumentCaptor.capture(), eq(formatterFactory));
 
-        Document expectedDocument = new Document(new Paragraph(new Image("Passed",
-                                                                         "http://localhost:9000/static/communityBranchPlugin/checks/QualityGateBadge/passed.svg?sanitize=true")),
-                                                 new Text(""), new Heading(1, new Text("Analysis Details")),
-                                                 new Heading(2, new Text("0 Issues")), new List(List.Style.BULLET,
-                                                                                                new ListItem(
-                                                                                                        new Image("Bug",
-                                                                                                                  "http://localhost:9000/static/communityBranchPlugin/common/bug.svg?sanitize=true"),
-                                                                                                        new Text(" "),
-                                                                                                        new Text(
-                                                                                                                "0 Bugs")),
-                                                                                                new ListItem(new Image(
-                                                                                                        "Vulnerability",
-                                                                                                        "http://localhost:9000/static/communityBranchPlugin/common/vulnerability.svg?sanitize=true"),
-                                                                                                             new Text(
-                                                                                                                     " "),
-                                                                                                             new Text(
-                                                                                                                     "0 Vulnerabilities")),
-                                                                                                new ListItem(new Image(
-                                                                                                        "Code Smell",
-                                                                                                        "http://localhost:9000/static/communityBranchPlugin/common/code_smell.svg?sanitize=true"),
-                                                                                                             new Text(
-                                                                                                                     " "),
-                                                                                                             new Text(
-                                                                                                                     "0 Code Smells"))),
-                                                 new Heading(2, new Text("Coverage and Duplications")),
-                                                 new List(List.Style.BULLET, new ListItem(
-                                                         new Image("25 percent coverage",
-                                                                   "http://localhost:9000/static/communityBranchPlugin/checks/CoverageChart/25.svg?sanitize=true"),
-                                                         new Text(" "),
-                                                         new Text("33.00% Coverage (21.78% Estimated after merge)")),
-                                                          new ListItem(new Image("20 percent duplication",
-                                                                                 "http://localhost:9000/static/communityBranchPlugin/checks/Duplications/20.svg?sanitize=true"),
-                                                                       new Text(" "), new Text(
-                                                                  "18.00% Duplicated Code (21.78% Estimated after merge)"))),
-                                                 new Paragraph(new Text("**Project ID:** Project Key")),
-                                                 new Paragraph(new Link("http://localhost:9000/dashboard?id=Project+Key&pullRequest=5", new Text("View in SonarQube"))));
+        Document expectedDocument = new Document(
+                new Paragraph(
+                        new Image("Passed", "http://localhost:9000/static/communityBranchPlugin/checks/QualityGateBadge/passed.svg?sanitize=true", true)),
+                new Text(""),
+                new Heading(1, new Text("Analysis Details")),
+                new Heading(2, new Text("0 Issues")),
+                new List(List.Style.NONE,
+                        new ListItem(
+                                new Image("Bug", "http://localhost:9000/static/communityBranchPlugin/common/bug.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("0 Bugs")),
+                        new ListItem(
+                                new Image("Vulnerability", "http://localhost:9000/static/communityBranchPlugin/common/vulnerability.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("0 Vulnerabilities")),
+                        new ListItem(
+                                new Image("Code Smell", "http://localhost:9000/static/communityBranchPlugin/common/code_smell.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("0 Code Smells"))),
+                new Heading(2, new Text("Coverage and Duplications")),
+                new List(List.Style.NONE, new ListItem(
+                        new Image("25 percent coverage", "http://localhost:9000/static/communityBranchPlugin/checks/CoverageChart/25.svg?sanitize=true", true),
+                        new Text(" ", true),
+                        new Text("33.00% Coverage (21.78% Estimated after merge)")),
+                        new ListItem(
+                                new Image("20 percent duplication", "http://localhost:9000/static/communityBranchPlugin/checks/Duplications/20.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("18.00% Duplicated Code (21.78% Estimated after merge)"))),
+                new Paragraph(
+                        new Link("http://localhost:9000/dashboard?id=Project+Key&pullRequest=5", new Text("View in SonarQube"))));
 
         assertThat(documentArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(expectedDocument);
 
@@ -529,42 +512,36 @@ public class AnalysisDetailsTest {
         ArgumentCaptor<Document> documentArgumentCaptor = ArgumentCaptor.forClass(Document.class);
         verify(formatter).format(documentArgumentCaptor.capture(), eq(formatterFactory));
 
-        Document expectedDocument = new Document(new Paragraph(
-                new Image("Passed", "http://host.name/path/checks/QualityGateBadge/passed.svg?sanitize=true")),
-                                                 new Text(""), new Heading(1, new Text("Analysis Details")),
-                                                 new Heading(2, new Text("1 Issue")), new List(List.Style.BULLET,
-                                                                                               new ListItem(
-                                                                                                       new Image("Bug",
-                                                                                                                 "http://host.name/path/common/bug.svg?sanitize=true"),
-                                                                                                       new Text(" "),
-                                                                                                       new Text(
-                                                                                                               "1 Bug")),
-                                                                                               new ListItem(new Image(
-                                                                                                       "Vulnerability",
-                                                                                                       "http://host.name/path/common/vulnerability.svg?sanitize=true"),
-                                                                                                            new Text(
-                                                                                                                    " "),
-                                                                                                            new Text(
-                                                                                                                    "0 Vulnerabilities")),
-                                                                                               new ListItem(new Image(
-                                                                                                       "Code Smell",
-                                                                                                       "http://host.name/path/common/code_smell.svg?sanitize=true"),
-                                                                                                            new Text(
-                                                                                                                    " "),
-                                                                                                            new Text(
-                                                                                                                    "0 Code Smells"))),
-                                                 new Heading(2, new Text("Coverage and Duplications")),
-                                                 new List(List.Style.BULLET, new ListItem(
-                                                         new Image("25 percent coverage",
-                                                                   "http://host.name/path/checks/CoverageChart/25.svg?sanitize=true"),
-                                                         new Text(" "),
-                                                         new Text("25.00% Coverage (21.78% Estimated after merge)")),
-                                                          new ListItem(new Image("10 percent duplication",
-                                                                                 "http://host.name/path/checks/Duplications/10.svg?sanitize=true"),
-                                                                       new Text(" "), new Text(
-                                                                  "10.00% Duplicated Code (21.78% Estimated after merge)"))),
-                                                 new Paragraph(new Text("**Project ID:** Project Key")),
-                                                 new Paragraph(new Link("http://localhost:9000/dashboard?id=Project+Key&pullRequest=5", new Text("View in SonarQube"))));
+        Document expectedDocument = new Document(
+                new Paragraph(
+                        new Image("Passed", "http://host.name/path/checks/QualityGateBadge/passed.svg?sanitize=true", true)),
+                new Text(""),
+                new Heading(1, new Text("Analysis Details")),
+                new Heading(2, new Text("1 Issue")),
+                new List(List.Style.NONE,
+                        new ListItem(
+                                new Image("Bug", "http://host.name/path/common/bug.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("1 Bug")),
+                        new ListItem(
+                                new Image("Vulnerability", "http://host.name/path/common/vulnerability.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("0 Vulnerabilities")),
+                        new ListItem(
+                                new Image("Code Smell", "http://host.name/path/common/code_smell.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("0 Code Smells"))),
+                new Heading(2, new Text("Coverage and Duplications")),
+                new List(List.Style.NONE,
+                        new ListItem(
+                                new Image("25 percent coverage", "http://host.name/path/checks/CoverageChart/25.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("25.00% Coverage (21.78% Estimated after merge)")),
+                        new ListItem(
+                                new Image("10 percent duplication", "http://host.name/path/checks/Duplications/10.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("10.00% Duplicated Code (21.78% Estimated after merge)"))),
+                new Paragraph(new Link("http://localhost:9000/dashboard?id=Project+Key&pullRequest=5", new Text("View in SonarQube"))));
 
         assertThat(documentArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(expectedDocument);
 
@@ -628,42 +605,36 @@ public class AnalysisDetailsTest {
         ArgumentCaptor<Document> documentArgumentCaptor = ArgumentCaptor.forClass(Document.class);
         verify(formatter).format(documentArgumentCaptor.capture(), eq(formatterFactory));
 
-        Document expectedDocument = new Document(new Paragraph(new Image("Passed",
-                                                                         "http://localhost:9000/static/communityBranchPlugin/checks/QualityGateBadge/passed.svg?sanitize=true")),
-                                                 new Text(""), new Heading(1, new Text("Analysis Details")),
-                                                 new Heading(2, new Text("0 Issues")), new List(List.Style.BULLET,
-                                                                                                new ListItem(
-                                                                                                        new Image("Bug",
-                                                                                                                  "http://localhost:9000/static/communityBranchPlugin/common/bug.svg?sanitize=true"),
-                                                                                                        new Text(" "),
-                                                                                                        new Text(
-                                                                                                                "0 Bugs")),
-                                                                                                new ListItem(new Image(
-                                                                                                        "Vulnerability",
-                                                                                                        "http://localhost:9000/static/communityBranchPlugin/common/vulnerability.svg?sanitize=true"),
-                                                                                                             new Text(
-                                                                                                                     " "),
-                                                                                                             new Text(
-                                                                                                                     "0 Vulnerabilities")),
-                                                                                                new ListItem(new Image(
-                                                                                                        "Code Smell",
-                                                                                                        "http://localhost:9000/static/communityBranchPlugin/common/code_smell.svg?sanitize=true"),
-                                                                                                             new Text(
-                                                                                                                     " "),
-                                                                                                             new Text(
-                                                                                                                     "0 Code Smells"))),
-                                                 new Heading(2, new Text("Coverage and Duplications")),
-                                                 new List(List.Style.BULLET, new ListItem(
-                                                         new Image("0 percent coverage",
-                                                                   "http://localhost:9000/static/communityBranchPlugin/checks/CoverageChart/0.svg?sanitize=true"),
-                                                         new Text(" "),
-                                                         new Text("0.00% Coverage (21.78% Estimated after merge)")),
-                                                          new ListItem(new Image("20plus percent duplication",
-                                                                                 "http://localhost:9000/static/communityBranchPlugin/checks/Duplications/20plus.svg?sanitize=true"),
-                                                                       new Text(" "), new Text(
-                                                                  "30.00% Duplicated Code (21.78% Estimated after merge)"))),
-                                                 new Paragraph(new Text("**Project ID:** Project Key")),
-                                                 new Paragraph(new Link("http://localhost:9000/dashboard?id=Project+Key&pullRequest=5", new Text("View in SonarQube"))));
+        Document expectedDocument = new Document(
+                new Paragraph(
+                        new Image("Passed", "http://localhost:9000/static/communityBranchPlugin/checks/QualityGateBadge/passed.svg?sanitize=true", true)),
+                new Text(""),
+                new Heading(1, new Text("Analysis Details")),
+                new Heading(2, new Text("0 Issues")),
+                new List(List.Style.NONE,
+                        new ListItem(
+                                new Image("Bug", "http://localhost:9000/static/communityBranchPlugin/common/bug.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("0 Bugs")),
+                        new ListItem(
+                                new Image("Vulnerability", "http://localhost:9000/static/communityBranchPlugin/common/vulnerability.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("0 Vulnerabilities")),
+                        new ListItem(
+                                new Image("Code Smell", "http://localhost:9000/static/communityBranchPlugin/common/code_smell.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("0 Code Smells"))),
+                new Heading(2, new Text("Coverage and Duplications")),
+                new List(List.Style.NONE,
+                        new ListItem(
+                                new Image("0 percent coverage", "http://localhost:9000/static/communityBranchPlugin/checks/CoverageChart/0.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("0.00% Coverage (21.78% Estimated after merge)")),
+                        new ListItem(
+                                new Image("20plus percent duplication", "http://localhost:9000/static/communityBranchPlugin/checks/Duplications/20plus.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Text("30.00% Duplicated Code (21.78% Estimated after merge)"))),
+                new Paragraph(new Link("http://localhost:9000/dashboard?id=Project+Key&pullRequest=5", new Text("View in SonarQube"))));
 
         assertThat(documentArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(expectedDocument);
 
@@ -845,17 +816,13 @@ public class AnalysisDetailsTest {
         assertThat(documentArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(
                 new Document(
                         new Paragraph(
-                                new Text("**Type:** BUG "),
-                                new Image("BUG", "http://localhost:9000/static/communityBranchPlugin/checks/IssueType/bug.svg?sanitize=true")
+                                new Image("severity", "http://localhost:9000/static/communityBranchPlugin/checks/Severity/severity-text.svg?sanitize=true", true),
+                                new Text(" ", true),
+                                new Image("BUG", "http://localhost:9000/static/communityBranchPlugin/checks/IssueType/bug-text.svg?sanitize=true", true),
+                                new Text(" 123 min", true)
                         ),
-                        new Paragraph(
-                                new Text("**Severity:** severity "),
-                                new Image("severity", "http://localhost:9000/static/communityBranchPlugin/checks/Severity/severity.svg?sanitize=true")
-                        ),
-                        new Paragraph(new Text("**Message:** message")),
-                        new Paragraph(new Text("**Duration (min):** 123")),
+                        new Paragraph(new Text("message")),
                         new Text(""),
-                        new Paragraph(new Text("**Project ID:** projectKey **Issue ID:** issueKey")),
                         new Paragraph(new Link("http://localhost:9000/project/issues?id=projectKey&pullRequest=branchName&issues=issueKey&open=issueKey", new Text("View in SonarQube")))
                 )
         );

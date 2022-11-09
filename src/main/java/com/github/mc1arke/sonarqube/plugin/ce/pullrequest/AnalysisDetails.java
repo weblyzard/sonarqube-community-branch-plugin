@@ -43,6 +43,10 @@ public class AnalysisDetails {
     private final QualityGate qualityGate;
     private final PostProjectAnalysisTask.ProjectAnalysis projectAnalysis;
 
+    public static boolean isOpenIssue(PostAnalysisIssueVisitor.ComponentIssue issue) {
+        return OPEN_ISSUE_STATUSES.contains(issue.getIssue().getStatus());
+    }
+
     AnalysisDetails(String pullRequestId, String commitId, List<PostAnalysisIssueVisitor.ComponentIssue> issues,
                     QualityGate qualityGate, PostProjectAnalysisTask.ProjectAnalysis projectAnalysis) {
         super();
@@ -96,11 +100,15 @@ public class AnalysisDetails {
     }
 
     public List<PostAnalysisIssueVisitor.ComponentIssue> getScmReportableIssues() {
+        return getScmReportableIssues(false);
+    }
+
+    public List<PostAnalysisIssueVisitor.ComponentIssue> getScmReportableIssues(boolean includeNotOpen) {
         return getIssues().stream()
                 .filter(i -> i.getComponent().getReportAttributes().getScmPath().isPresent())
                 .filter(i -> i.getComponent().getType() == Component.Type.FILE)
                 .filter(i -> i.getIssue().resolution() == null)
-                .filter(i -> OPEN_ISSUE_STATUSES.contains(i.getIssue().status()))
+                .filter(i -> includeNotOpen || OPEN_ISSUE_STATUSES.contains(i.getIssue().status()))
                 .collect(Collectors.toList());
     }
 

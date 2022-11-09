@@ -179,7 +179,7 @@ public final class AnalysisSummary {
                 ),
                 failedConditions.isEmpty() ? new Text("") :
                     new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
-                            com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.NONE,
+                            com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.BULLET,
                             failedConditions.stream().map(Text::new).map(ListItem::new).toArray(ListItem[]::new)),
                 new Heading(1, new Text("Analysis Details")),
                 new Heading(2, new Text(pluralOf(getTotalIssueCount(), "Issue", "Issues"))),

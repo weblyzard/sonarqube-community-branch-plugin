@@ -36,6 +36,7 @@ import com.github.mc1arke.sonarqube.plugin.almclient.azuredevops.model.mappers.G
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.AnalysisDetails;
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.DiscussionAwarePullRequestDecorator;
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.PostAnalysisIssueVisitor;
+import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.PostAnalysisIssueVisitor.ComponentIssue;
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.PullRequestBuildStatusDecorator;
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.MarkdownFormatterFactory;
 import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.report.AnalysisIssueSummary;
@@ -229,7 +230,7 @@ public class AzureDevOpsPullRequestDecorator extends DiscussionAwarePullRequestD
 
     @Override
     protected void deleteDiscussionNote(AzureDevopsClient client, CommentThread discussion, PullRequest pullRequest, Comment note) {
-
+        throw new IllegalStateException("This is not implemented for Azure Devops.");
     }
 
     @Override
@@ -252,7 +253,19 @@ public class AzureDevOpsPullRequestDecorator extends DiscussionAwarePullRequestD
 
     @Override
     protected void unresolveDiscussion(AzureDevopsClient client, CommentThread discussion, PullRequest pullRequest) {
-        // TODO Auto-generated method stub
+        throw new IllegalStateException("This is not implemented for Azure Devops.");
+    }
+
+    @Override
+    protected void updateCommitNoteForIssue(AzureDevopsClient client, PullRequest pullRequest, CommentThread discussion,
+            Comment note, ComponentIssue issue, AnalysisDetails analysis, AnalysisIssueSummary analysisIssueSummary) {
+        throw new IllegalStateException("This is not implemented for Azure Devops.");
+    }
+
+    @Override
+    protected void updateNoteInDiscussion(AzureDevopsClient client, CommentThread discussion, Comment note,
+            PullRequest pullRequest, String newNoteContent) {
+        throw new IllegalStateException("This is not implemented for Azure Devops.");
     }
 
 }

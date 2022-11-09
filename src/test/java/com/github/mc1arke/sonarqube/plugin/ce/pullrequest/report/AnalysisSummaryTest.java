@@ -77,7 +77,7 @@ class AnalysisSummaryTest {
         verify(formatter).format(documentArgumentCaptor.capture());
 
         Document expectedDocument = new Document(new Paragraph(new Image("status description", "statusImageUrl", true)),
-                new List(List.Style.NONE,
+                new List(List.Style.BULLET,
                         new ListItem(new Text("issuea")),
                         new ListItem(new Text("issueb")),
                         new ListItem(new Text("issuec"))),

@@ -59,6 +59,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -129,7 +130,7 @@ public class GitlabMergeRequestDecoratorIntegrationTest {
 
             issues.add(componentIssue);
         }
-        when(analysisDetails.getScmReportableIssues()).thenReturn(issues);
+        when(analysisDetails.getScmReportableIssues(anyBoolean())).thenReturn(issues);
 
         ReportGenerator reportGenerator = mock(ReportGenerator.class);
         AnalysisSummary analysisSummary = mock(AnalysisSummary.class);

@@ -65,6 +65,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
@@ -521,7 +522,7 @@ public class GitlabMergeRequestDecoratorTest {
         when(componentIssue.getComponent()).thenReturn(component);
         when(componentIssue.getScmPath()).thenReturn(Optional.of("path-to-file"));
 
-        when(analysisDetails.getScmReportableIssues()).thenReturn(Collections.singletonList(componentIssue));
+        when(analysisDetails.getScmReportableIssues(anyBoolean())).thenReturn(Collections.singletonList(componentIssue));
         when(gitlabClient.getMergeRequestDiscussions(anyLong(), anyLong())).thenReturn(new ArrayList<>());
 
         Changeset changeset = mock(Changeset.class);
@@ -563,7 +564,7 @@ public class GitlabMergeRequestDecoratorTest {
         when(componentIssue.getComponent()).thenReturn(component);
         when(componentIssue.getScmPath()).thenReturn(Optional.of("path-to-file"));
 
-        when(analysisDetails.getScmReportableIssues()).thenReturn(Collections.singletonList(componentIssue));
+        when(analysisDetails.getScmReportableIssues(anyBoolean())).thenReturn(Collections.singletonList(componentIssue));
         when(gitlabClient.getMergeRequestDiscussions(anyLong(), anyLong())).thenReturn(new ArrayList<>());
 
         Changeset changeset = mock(Changeset.class);
@@ -652,7 +653,7 @@ public class GitlabMergeRequestDecoratorTest {
         when(discussion.getNotes()).thenReturn(Collections.singletonList(note));
 
         when(gitlabClient.getMergeRequestDiscussions(anyLong(), anyLong())).thenReturn(Collections.singletonList(discussion));
-        when(analysisDetails.getScmReportableIssues()).thenReturn(Collections.singletonList(componentIssue));
+        when(analysisDetails.getScmReportableIssues(anyBoolean())).thenReturn(Collections.singletonList(componentIssue));
 
         Changeset changeset = mock(Changeset.class);
         when(changeset.getRevision()).thenReturn("DEF");

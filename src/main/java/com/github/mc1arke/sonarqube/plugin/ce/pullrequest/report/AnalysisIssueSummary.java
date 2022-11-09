@@ -97,16 +97,16 @@ public final class AnalysisIssueSummary {
         Long effort = getEffortInMinutes();
         Node effortNode = (null == effort ? new Text("") : new Text(String.format(" %s min", effort), true));
 
-        Node resolutionNode = (StringUtils.isBlank(getResolution()) ? new Text("") : new Paragraph(new Text(String.format(" (**Resolution:** %s)", resolution), true)));
+        Node resolutionNode = (StringUtils.isBlank(getResolution()) ? new Text("") : new Paragraph(new Text(String.format("**Resolution:** %s", resolution), true)));
 
         Document document = new Document(
+                new Paragraph(new Text(getMessage())),
                 new Paragraph(
                         new Image(getSeverity(), getSeverityImageUrl(), true),
                         new Text(" ", true),
                         new Image(getType(), getTypeImageUrl(), true),
                         effortNode
                 ),
-                new Paragraph(new Text(getMessage())),
                 resolutionNode,
                 new Paragraph(new Link(getIssueUrl(), new Text("View in SonarQube")))
         );

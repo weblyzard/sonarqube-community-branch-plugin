@@ -65,14 +65,14 @@ class AnalysisIssueSummaryTest {
                 .usingRecursiveComparison()
                 .isEqualTo(
                     new Document(
+                            new Paragraph(new Text("message")),
                             new Paragraph(
                                     new Image("severity", "severityImageUrl", true),
                                     new Text(" ", true),
                                     new Image("type", "typeImageUrl", true),
                                     new Text(" 101 min", true)
                             ),
-                            new Paragraph(new Text("message")),
-                            new Paragraph(new Text(" (**Resolution:** resolution)", true)),
+                            new Paragraph(new Text("**Resolution:** resolution", true)),
                             new Paragraph(new Link("issueUrl", new Text("View in SonarQube")))
                 )
         );

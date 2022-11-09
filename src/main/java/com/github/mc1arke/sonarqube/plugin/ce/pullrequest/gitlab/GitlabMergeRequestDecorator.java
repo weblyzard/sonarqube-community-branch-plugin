@@ -164,6 +164,13 @@ public class GitlabMergeRequestDecorator extends DiscussionAwarePullRequestDecor
     }
 
     @Override
+    protected void updateCommitNoteForIssue(GitlabClient client, MergeRequest mergeRequest, Discussion discussion,
+            Note note, PostAnalysisIssueVisitor.ComponentIssue issue, AnalysisDetails analysis) {
+        String issueSummary = analysis.createAnalysisIssueSummary(issue, formatterFactory);
+        updateNoteInDiscussion(client, discussion, note, mergeRequest, issueSummary);
+    }
+
+    @Override
     protected void submitSummaryNote(GitlabClient client, MergeRequest mergeRequest, AnalysisDetails analysis) {
         try {
             String summaryCommentBody = analysis.createAnalysisSummary(formatterFactory);
@@ -216,10 +223,21 @@ public class GitlabMergeRequestDecorator extends DiscussionAwarePullRequestDecor
         return !note.isSystem();
     }
 
-	@Override
+    @Override
     protected void addNoteToDiscussion(GitlabClient client, Discussion discussion, MergeRequest pullRequest, String note) {
         try {
             client.addMergeRequestDiscussionNote(pullRequest.getTargetProjectId(), pullRequest.getIid(), discussion.getId(), note);
+        } catch (IOException ex) {
+            throw new IllegalStateException("Could not add note to Merge Request discussion", ex);
+        }
+    }
+
+    @Override
+    protected void updateNoteInDiscussion(GitlabClient client, Discussion discussion, Note note,
+            MergeRequest pullRequest, String newNoteContent) {
+        try {
+            client.updateMergeRequestDiscussionNote(pullRequest.getTargetProjectId(), pullRequest.getIid(),
+                    discussion.getId(), note.getId(), newNoteContent);
         } catch (IOException ex) {
             throw new IllegalStateException("Could not add note to Merge Request discussion", ex);
         }

@@ -47,7 +47,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.github.mc1arke.sonarqube.plugin.CommunityBranchPlugin;;
+import com.github.mc1arke.sonarqube.plugin.CommunityBranchPlugin;
+import com.github.mc1arke.sonarqube.plugin.ce.pullrequest.AnalysisDetails.ProjectIssueIdentifier;
 
 public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> implements PullRequestBuildStatusDecorator {
 
@@ -125,31 +126,33 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
         // user/bot/token used to add comments to the ALM
         U user = getCurrentUser(client);
 
-        // list of all open issues on sonarqube
-        List<PostAnalysisIssueVisitor.ComponentIssue> openSonarqubeIssues = analysis.getPostAnalysisIssueVisitor()
-                .getIssues().stream().filter(i -> OPEN_ISSUE_STATUSES.contains(i.getIssue().getStatus()))
-                .collect(Collectors.toList());
+        // list of all issues on SonarQube
+        List<PostAnalysisIssueVisitor.ComponentIssue> sonarqubeIssues = analysis.getPostAnalysisIssueVisitor()
+                .getIssues();
 
         // list of all comments by this bot user on ALM
         List<Triple<D, N, AnalysisDetails.ProjectIssueIdentifier>> existingDiscussions = findSonarqubeComments(client,
                 pullRequest, user, analysis);
 
-        // enumerate all "old" discussions (i.e all discussions that reference an issue
-        // key no longer reported by sonarqube)
-        List<Triple<D, N, AnalysisDetails.ProjectIssueIdentifier>> oldDiscussions = findOldDiscussions(
-                existingDiscussions, openSonarqubeIssues);
+        // enumerate all "resolved" discussions (i.e all discussions that reference an issue
+        // key no longer reported "open" by sonarqube)
+        List<Triple<D, N, AnalysisDetails.ProjectIssueIdentifier>> resolvedDiscussions = findResolvedDiscussions(
+                existingDiscussions, sonarqubeIssues);
 
         // enumerate all discussions which should still be active
         List<Triple<D, N, AnalysisDetails.ProjectIssueIdentifier>> currentDiscussions = findCurrentDiscussions(
-                existingDiscussions, oldDiscussions);
+                existingDiscussions, resolvedDiscussions);
 
         // get all commits that are relevant for this pull/merge request
         List<String> commitIds = getCommitIdsForPullRequest(client, pullRequest);
+
+        // find all issues for which a comment exists
         List<String> issueIdsWithExistingComments = currentDiscussions.stream().map(Triple::getRight)
                 .map(AnalysisDetails.ProjectIssueIdentifier::getIssueKey).collect(Collectors.toList());
-        // find all sonarqube issues that have no corresponding comment in the ALM
+
+        // find all SonarQube issues that have no corresponding comment in the ALM
         List<Pair<PostAnalysisIssueVisitor.ComponentIssue, String>> uncommentedIssues = findIssuesWithoutComments(
-                openSonarqubeIssues, issueIdsWithExistingComments).stream()
+                sonarqubeIssues, issueIdsWithExistingComments).stream()
                 // load scm paths to each issue
                 .map(issue -> loadScmPathsForIssues(issue, analysis))
                 // include only those where present
@@ -157,6 +160,9 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
                 // make sure the reported issue is reported on one of the commits of this
                 // pull/merge request
                 .filter(issue -> isIssueFromCommitInCurrentRequest(issue.getLeft(), commitIds, scmInfoRepository))
+                // also make sure that the issue is not closed
+                // (note: we do not want do annotate a "resolved" issue if it's not yet existing as a comment)
+                .filter(issue -> isOpen(issue.getLeft()))
                 .collect(Collectors.toList());
 
         Predicate<PostAnalysisIssueVisitor.ComponentIssue> shouldIssueBeCommented = shouldIssueBeCommented(
@@ -184,9 +190,11 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
 
         // close all "old" discussions (i.e all discussions that reference an issue key
         // no longer reported by sonarqube)
-        oldDiscussions.stream().map(Triple::getLeft).forEach(discussion -> {
-            resolveOrPlaceFinalCommentOnDiscussion(client, user, discussion, pullRequest, deleteResolvedIssues,
-                    deleteSummaries);
+        resolvedDiscussions.stream().forEach(triple -> {
+            updateIssueComment(client, pullRequest, triple.getLeft(), triple.getMiddle(), sonarqubeIssues,
+                    triple.getRight(), analysis);
+            resolveOrPlaceFinalCommentOnDiscussion(client, user, triple.getLeft(), pullRequest,
+                    deleteResolvedIssues, deleteSummaries);
         });
 
         // re-check all existing discussions and either leave open or close/resolve
@@ -195,16 +203,20 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
             boolean isResolved = isResolved(client, triple.getLeft(), getNotesForDiscussion(client, triple.getLeft()),
                     user);
             // retrieve the linked issue
-            Optional<PostAnalysisIssueVisitor.ComponentIssue> issue = openSonarqubeIssues.stream()
+            Optional<PostAnalysisIssueVisitor.ComponentIssue> issue = sonarqubeIssues.stream()
                     .filter(i -> i.getIssue().key().equals(triple.getRight().getIssueKey())).findFirst();
             // and check if the discussion should actually be resolved
             boolean shouldBeResolved = issue.isPresent() && !shouldIssueBeCommented.test(issue.get());
 
             if (isResolved && !shouldBeResolved && reopenResolvedIssues) {
                 // the issue is resolved although it should be open -> reopen
+                updateIssueComment(client, pullRequest, triple.getLeft(), triple.getMiddle(), sonarqubeIssues,
+                        triple.getRight(), analysis);
                 unresolveDiscussion(client, triple.getLeft(), pullRequest);
             } else if (shouldBeResolved && !isResolved) {
                 // the issue should be resolved, but isn't -> resolve/delete
+                updateIssueComment(client, pullRequest, triple.getLeft(), triple.getMiddle(), sonarqubeIssues,
+                        triple.getRight(), analysis);
                 resolveOrPlaceFinalCommentOnDiscussion(client, user, triple.getLeft(), pullRequest,
                         deleteResolvedIssues, deleteSummaries);
             }
@@ -242,6 +254,9 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
     protected abstract void submitCommitNoteForIssue(C client, P pullRequest,
             PostAnalysisIssueVisitor.ComponentIssue issue, String filePath, AnalysisDetails analysis);
 
+    protected abstract void updateCommitNoteForIssue(C client, P pullRequest, D discussion, N note,
+            PostAnalysisIssueVisitor.ComponentIssue issue, AnalysisDetails analysis);
+
     protected abstract String getNoteContent(C client, N note);
 
     protected abstract List<N> getNotesForDiscussion(C client, D discussion);
@@ -251,6 +266,9 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
     protected abstract boolean isUserNote(N note);
 
     protected abstract void addNoteToDiscussion(C client, D discussion, P pullRequest, String note);
+
+    protected abstract void updateNoteInDiscussion(C client, D discussion, N note, P pullRequest,
+            String newNoteContent);
 
     protected abstract void deleteDiscussionNote(C client, D discussion, P pullRequest, N note);
 
@@ -331,19 +349,19 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
     }
 
     /**
-     * Find all discussions that reference a sonarqube issue that is no longer
-     * present
+     * Find all discussions that reference a SonarQube issue that is no longer "open"
      * 
-     * @param sonarqubeComments the list of existing comments by sonarcube
-     * @param issues            the current set of open issues
+     * @param sonarqubeComments the list of existing comments by SonarQube
+     * @param issues            the current set of SonarQube issues
      * @return a filtered list of comments that reference a no longer existing issue
      */
-    private List<Triple<D, N, AnalysisDetails.ProjectIssueIdentifier>> findOldDiscussions(
+    private List<Triple<D, N, AnalysisDetails.ProjectIssueIdentifier>> findResolvedDiscussions(
             List<Triple<D, N, AnalysisDetails.ProjectIssueIdentifier>> sonarqubeComments,
             List<PostAnalysisIssueVisitor.ComponentIssue> issues) {
 
-        // collect the set of all known issues
-        Set<String> openIssueKeys = issues.stream().map(issue -> issue.getIssue().key()).collect(Collectors.toSet());
+        // collect the set of all known "open" issues
+        Set<String> openIssueKeys = issues.stream().filter(issue -> isOpen(issue)).map(issue -> issue.getIssue().key())
+                .collect(Collectors.toSet());
 
         return sonarqubeComments.stream()
                 // return comments which are _not_ in the set of open issues
@@ -381,18 +399,30 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
         return SUMMARY_COMMENT_HINTS.stream().allMatch(hint -> noteContent.contains(hint));
     }
 
+    private void updateIssueComment(C client, P pullRequest, D discussion, N note,
+            List<PostAnalysisIssueVisitor.ComponentIssue> sonarqubeIssues, ProjectIssueIdentifier identifier,
+            AnalysisDetails analysis) {
+        // this is not ideal, this should be a map
+        Optional<PostAnalysisIssueVisitor.ComponentIssue> issue = sonarqubeIssues.stream()
+                .filter(i -> i.getIssue().key().equals(identifier.getIssueKey())).findFirst();
+        if (issue.isPresent()) {
+            updateCommitNoteForIssue(client, pullRequest, discussion, note, issue.get(), analysis);
+        }
+    }
+
     private void resolveOrPlaceFinalCommentOnDiscussion(C client, U currentUser, D discussion, P pullRequest,
             boolean deleteResolvedIssues, boolean deleteSummary) {
         List<N> discussionNotes = getNotesForDiscussion(client, discussion);
         boolean isAlreadyResolved = isResolved(client, discussion, discussionNotes, currentUser);
+        // check if discussion contains a summary
+        boolean isSummary = discussionNotes.stream().anyMatch(note -> isSummaryNote(client, note));
         if (discussionNotes.stream().filter(this::isUserNote)
                 .anyMatch(note -> !isNoteFromCurrentUser(note, currentUser))) {
             if (!isAlreadyResolved) {
+                // add note to end of discussion thread that this thread should be closed
                 addNoteToDiscussion(client, discussion, pullRequest, RESOLVED_ISSUE_NEEDING_CLOSED_MESSAGE);
             }
         } else {
-            // check if discussion contains a summary
-            boolean isSummary = discussionNotes.stream().anyMatch(note -> isSummaryNote(client, note));
             if (deleteResolvedIssues && !isSummary || deleteSummary && isSummary) {
                 discussionNotes.stream().filter(note -> isNoteFromCurrentUser(note, currentUser))
                         .forEach(note -> deleteDiscussionNote(client, discussion, pullRequest, note));
@@ -458,5 +488,9 @@ public abstract class DiscussionAwarePullRequestDecorator<C, P, U, D, N> impleme
             predicate = predicate.and(filterForRuleType);
         }
         return predicate;
+    }
+
+    private static boolean isOpen(PostAnalysisIssueVisitor.ComponentIssue issue) {
+        return OPEN_ISSUE_STATUSES.contains(issue.getIssue().getStatus());
     }
 }

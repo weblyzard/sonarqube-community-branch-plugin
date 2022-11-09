@@ -312,7 +312,7 @@ public class AnalysisDetailsTest {
         Document expectedDocument = new Document(
                 new Paragraph(
                         new Image("Failed", "http://localhost:9000/static/communityBranchPlugin/checks/QualityGateBadge/failed.svg?sanitize=true", true)),
-                new List(List.Style.NONE,
+                new List(List.Style.BULLET,
                         new ListItem(new Text("12 Lines to Cover (is less than 20)")),
                         new ListItem(new Text("2 Code Smells (is greater than 0)")),
                         new ListItem(new Text("68.00% Line Coverage (is less than 80.00%)")),
@@ -815,13 +815,13 @@ public class AnalysisDetailsTest {
 
         assertThat(documentArgumentCaptor.getValue()).usingRecursiveComparison().isEqualTo(
                 new Document(
+                        new Paragraph(new Text("message")),
                         new Paragraph(
                                 new Image("severity", "http://localhost:9000/static/communityBranchPlugin/checks/Severity/severity-text.svg?sanitize=true", true),
                                 new Text(" ", true),
                                 new Image("BUG", "http://localhost:9000/static/communityBranchPlugin/checks/IssueType/bug-text.svg?sanitize=true", true),
                                 new Text(" 123 min", true)
                         ),
-                        new Paragraph(new Text("message")),
                         new Text(""),
                         new Paragraph(new Link("http://localhost:9000/project/issues?id=projectKey&pullRequest=branchName&issues=issueKey&open=issueKey", new Text("View in SonarQube")))
                 )

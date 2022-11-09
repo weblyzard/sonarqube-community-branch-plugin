@@ -196,7 +196,7 @@ public class AnalysisDetails {
                 ),
                 failedConditions.isEmpty() ? new Text("") :
                     new com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List(
-                            com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.NONE,
+                            com.github.mc1arke.sonarqube.plugin.ce.pullrequest.markup.List.Style.BULLET,
                             failedConditions.stream().map(c -> new ListItem(new Text(format(c)))).toArray(ListItem[]::new)),
                 new Heading(1, new Text("Analysis Details")),
                 new Heading(2, new Text(issueTotal + " Issue" + (issueCounts.values().stream().mapToLong(l -> l).sum() == 1 ? "" : "s"))),
@@ -241,16 +241,16 @@ public class AnalysisDetails {
         Node effortNode = (null == effort ? new Text("") : new Text(String.format(" %s min", effort), true));
 
         String resolution = issue.resolution();
-        Node resolutionNode = (StringUtils.isBlank(resolution) ? new Text("") : new Paragraph(new Text(String.format(" (**Resolution:** %s)", resolution), true)));
+        Node resolutionNode = (StringUtils.isBlank(resolution) ? new Text("") : new Paragraph(new Text(String.format("**Resolution:** %s", resolution), true)));
 
         Document document = new Document(
+                new Paragraph(new Text(issue.getMessage())),
                 new Paragraph(
                         new Image(issue.severity(), String.format("%s/checks/Severity/%s-text.svg?sanitize=true", baseImageUrl, issue.severity().toLowerCase()), true),
                         new Text(" ", true),
                         new Image(issue.type().name(), String.format("%s/checks/IssueType/%s-text.svg?sanitize=true", baseImageUrl, issue.type().name().toLowerCase()), true),
                         effortNode
                 ),
-                new Paragraph(new Text(issue.getMessage())),
                 resolutionNode,
                 new Paragraph(new Link(getIssueUrl(issue), new Text("View in SonarQube")))
         );

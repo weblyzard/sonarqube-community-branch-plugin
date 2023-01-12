@@ -43,7 +43,7 @@ public final class MarkdownFormatterFactory extends BaseFormatterFactory {
         return node -> {
             String imgTag = String.format("![%s](%s)", node.getAltText(), node.getSource());
             if (node.suppressLink()) {
-                imgTag = String.format("<a title=\"%s\">%s</a>", htmlEscaper().escape(node.getAltText()), imgTag);
+                imgTag = String.format("[%s](: \"%s\")", imgTag, htmlEscaper().escape(node.getAltText()));
             }
             return imgTag;
         };

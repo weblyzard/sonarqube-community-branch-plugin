@@ -230,9 +230,9 @@ class ReportGeneratorTest {
                 .withMessage("message")
                 .withResolution("FIXED")
                 .withSeverity("CRITICAL")
-                .withSeverityImageUrl("http://target.host:port/path/to/root/static/communityBranchPlugin/checks/Severity/critical.svg?sanitize=true")
+                .withSeverityImageUrl("http://target.host:port/path/to/root/static/communityBranchPlugin/checks/Severity/critical-text.svg?sanitize=true")
                 .withType(ruleType.name())
-                .withTypeImageUrl("http://target.host:port/path/to/root/static/communityBranchPlugin/checks/IssueType/" + ruleType.name().toLowerCase(Locale.ENGLISH) + ".svg?sanitize=true")
+                .withTypeImageUrl("http://target.host:port/path/to/root/static/communityBranchPlugin/checks/IssueType/" + ruleType.name().toLowerCase(Locale.ENGLISH) + "-text.svg?sanitize=true")
                 .withProjectKey("project-key")
                 .build();
 

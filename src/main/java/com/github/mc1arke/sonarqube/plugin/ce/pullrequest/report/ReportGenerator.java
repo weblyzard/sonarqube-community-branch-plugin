@@ -90,9 +90,9 @@ public class ReportGenerator {
                 .withProjectKey(analysisDetails.getAnalysisProjectKey())
                 .withResolution(issue.resolution())
                 .withSeverity(issue.severity())
-                .withSeverityImageUrl(String.format("%s/checks/Severity/%s.svg?sanitize=true", baseImageUrl, issue.severity().toLowerCase()))
+                .withSeverityImageUrl(String.format("%s/checks/Severity/%s-text.svg?sanitize=true", baseImageUrl, issue.severity().toLowerCase()))
                 .withType(issue.type().name())
-                .withTypeImageUrl(String.format("%s/checks/IssueType/%s.svg?sanitize=true", baseImageUrl, issue.type().name().toLowerCase()))
+                .withTypeImageUrl(String.format("%s/checks/IssueType/%s-text.svg?sanitize=true", baseImageUrl, issue.type().name().toLowerCase()))
                 .build();
     }
 
